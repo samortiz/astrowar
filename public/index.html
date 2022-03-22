@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AstroWar</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+
+   <input type="text" value="" id="name-input" />
+   <button type="button" id="join-btn" onclick="playerJoinsGame()" >Join</button>
+   <button class="btn" id="move-btn" hidden>Move</button>
+
+   <div id="main-display" style="border:1px solid blue; height:600px; width:600px; background:antiquewhite">
+   </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/pixi.min.js"></script>
+    <script src="js/astrowar-client.js" type="module"></script>
+  </body>
+</html>

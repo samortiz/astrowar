@@ -1,2 +1,6 @@
-# astrowar
-Multiplayer Space Shooter 
+AstroWar
+
+for development:
+  npm run dev 
+
+
