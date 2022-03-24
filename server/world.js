@@ -20,8 +20,8 @@ setupWorld();
 
 function setupWorld() {
   const planet = createPlanet(c.PLANET_ROCK_FILE, 100, 100, {titanium: 100, gold: 100, uranium: 100})
-  planet.x = 300;
-  planet.y = 300;
+  planet.x = 0;
+  planet.y = 0;
   world.planets.push(planet);
 }
 
@@ -32,8 +32,8 @@ export function createPlayer(socket, name) {
     socketId: socket.id,
     name,
     currentShip: null,
-    x: 50,
-    y: 50,
+    x: 0, // replaced soon
+    y: 0, // replaced soon
     color
   };
   world.players.push(player);
@@ -42,8 +42,8 @@ export function createPlayer(socket, name) {
     playerId: player.id,
     alive: true,
     objectType: c.OBJECT_TYPE_SHIP,
-    x: 50,
-    y: 50,
+    x: util.randomInt(100, 300) * (util.randomBool() ? 1 : -1),
+    y: util.randomInt(100, 300) * (util.randomBool() ? 1 : -1),
     vx: 0,
     vy: 0,
     rotation: 0,
@@ -51,12 +51,13 @@ export function createPlayer(socket, name) {
     armor: 100,
     armorMax : 100,
     gun: {
-      coolMax: 10,
+      coolMax: 5,
       cool: 0,
       ttl: 40,
       color: 'FF0000',
       radius: 2,
-      damage: 100,
+      damage: 50,
+      filename: c.BULLET_FILE,
     }
   };
   world.ships.push(ship);
@@ -140,7 +141,7 @@ export function getDisplay(player) {
   const bullets = [];
   for (let bullet of world.bullets) {
     if (bullet.alive) {
-      const bulletDisplay = {id: bullet.id, x: bullet.x, y: bullet.y, color: bullet.color};
+      const bulletDisplay = {id: bullet.id, x: bullet.x, y: bullet.y, filename: bullet.filename, color: bullet.color};
       bullets.push(bulletDisplay);
     }
   }
@@ -179,6 +180,7 @@ export function createBullet(x, y, vx, vy, gun) {
   bullet.color = gun.color;
   bullet.radius = gun.radius;
   bullet.damage = gun.damage;
+  bullet.filename = gun.filename;
   return bullet;
 }
 

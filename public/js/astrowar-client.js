@@ -18,10 +18,10 @@ const system = {
   bgSprite: null, // stars
   planetSprites: [],
   planetContainer: null,
-
+  bulletContainer: null,
+  bulletSpriteMap: new Map(), // { filename: [bulletSprite, bulletSprite]}
 };
 
-let shipGraphics; // PixiJS graphics
 let shipContainer;
 let shipSprites = {}; // {player.id : sprite}
 
@@ -52,7 +52,7 @@ document.getElementById("move-btn").addEventListener("click", () => {
 
 socket.on("update", newDisplayData => {
   displayData = newDisplayData;
-  console.log('updated', displayData);
+  // console.log('updated', displayData);
 });
 
 // Setup the App
@@ -61,6 +61,7 @@ function setupGame() {
   setupBackground();
   setupPlanets();
   setupShips();
+  setupBullets();
   setupExplosionGraphics();
   setupKeyboardListeners();
   app.ticker.add(delta => mainLoop(delta));
@@ -91,8 +92,11 @@ function setupBackground() {
 function setupShips() {
   shipContainer = new window.PIXI.Container();
   system.mainStage.addChild(shipContainer);
-  shipGraphics = new window.PIXI.Graphics();
-  shipContainer.addChild(shipGraphics);
+}
+
+function setupBullets() {
+  system.bulletContainer = new window.PIXI.Container();
+  system.mainStage.addChild(system.bulletContainer);
 }
 
 function setupPlanets() {
@@ -220,13 +224,39 @@ function moveBackground() {
   const { viewX, viewY } = getViewXy();
   system.bgSprite.tilePosition.x = (100 - viewX) + (system.screenWidth / 2);
   system.bgSprite.tilePosition.y = (100 - viewY) + (system.screenHeight / 2);
-
-
 }
 
+function clearAllBulletSprites() {
+  system.bulletSpriteMap.forEach((bulletSprites, filename) => {
+    for (const bulletSprite of bulletSprites) {
+      bulletSprite.visible = false;
+    }
+  });
+}
+
+function getBulletSprite(bullet) {
+  let bulletSprites = system.bulletSpriteMap.get(bullet.filename);
+  if (!bulletSprites || !bulletSprites.length) {
+    bulletSprites = [];
+    system.bulletSpriteMap.set(bullet.filename, bulletSprites);
+  }
+  let sprite = bulletSprites.find(bulletSprite => bulletSprite.visible === false);
+  if (!sprite) {
+    console.log('creating sprite for ', bullet);
+    let spriteSheet = window.PIXI.loader.resources[c.SPRITE_SHEET_JSON];
+    sprite = new window.PIXI.Sprite(spriteSheet.textures[bullet.filename]);
+    sprite.x = -100;
+    sprite.y = -100;
+    sprite.anchor.set(0.5, 0.5);
+    sprite.scale.set(0.5, 0.5);
+    system.bulletContainer.addChild(sprite);
+    bulletSprites.push(sprite);
+  }
+  sprite.visible = true;
+  return sprite;
+}
 
 function drawScreen() {
-  shipGraphics.clear();
   if (!displayData) {
     return;
   }
@@ -242,14 +272,12 @@ function drawScreen() {
   }
 
   const bullets = displayData.bullets;
+  clearAllBulletSprites();
   for (const bullet of bullets) {
+    const bulletSprite = getBulletSprite(bullet);
     const { viewX, viewY } = getViewXy();
-    const x = (bullet.x - viewX) + (system.screenWidth / 2);
-    const y = (bullet.y - viewY) + (system.screenHeight / 2);
-    shipGraphics.lineStyle(1, "0x" + bullet.color);
-    shipGraphics.beginFill("0x" + bullet.color);
-    shipGraphics.drawCircle(x, y, 4);
-    shipGraphics.endFill();
+    bulletSprite.x = (bullet.x - viewX) + (system.screenWidth / 2);
+    bulletSprite.y = (bullet.y - viewY) + (system.screenHeight / 2);
   }
 
   for (let explosion of displayData.explosions) {

@@ -17,7 +17,10 @@ export const PLANET_GREEN_FILE = "planet_green.png";
 export const PLANET_PURPLE_FILE = "planet_purple.png";
 export const PLANET_TYPES = [PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_GREEN_FILE, PLANET_PURPLE_FILE];
 
-
 export const OBJECT_TYPE_PLANET = "planet";
 export const OBJECT_TYPE_SHIP = "ship";
 export const OBJECT_TYPE_BULLET = "bullet";
+
+export const BULLET_FILE = "bullet.png";
+export const BULLET_BLUE_FILE = "bullet_blue.png";
+export const BULLET_WHITE_FILE = "bullet_white.png";
