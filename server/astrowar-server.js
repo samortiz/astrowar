@@ -1,5 +1,6 @@
 import * as c  from './server-constants.js'
-import * as w from './world.js'
+import * as world from './world.js'
+import * as run from './run.js'
 import express from "express"
 import cors from "cors"
 import { Server } from "socket.io"
@@ -25,13 +26,13 @@ socketIo.on("connection", (socket) => {
 
   // Player is joining the game
   socket.on("join", (name) => {
-    const player = w.createPlayer(socket, name);
+    const player = world.createPlayer(socket, name);
     console.log('player joined ', player);
     socket.emit("joined", player);
   });
 
   socket.on("keypress", (keyData) => {
-    const player = w.getPlayer(socket.id);
+    const player = world.getPlayer(socket.id);
     if (!player) {
       return;
     }
@@ -48,7 +49,7 @@ socketIo.on("connection", (socket) => {
 
 // Main server-side loop
 setInterval(function() {
-  w.mainServerLoop();
+  run.mainServerLoop();
 }, c.SERVER_TICK_MS);
 
 server.listen(c.PORT, () => console.log(`AstroWar server running on port ${c.PORT}`));
