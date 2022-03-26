@@ -30,24 +30,22 @@ let explosionSpriteSheet = null;
 let explosionContainer = null; // PixiJS container
 
 window.playerJoinsGame = () => {
-  const name = document.getElementById("name-input").value;
-  document.getElementById("name-input").disabled = true;
-  document.getElementById("join-btn").hidden = true;
-  document.getElementById("move-btn").hidden = false;
+  const joinDiv = document.getElementById("join-div");
+  const nameInput = document.getElementById("name-input");
+  const name = nameInput.value;
+  joinDiv.style.display = 'none';
   console.log('client calling join ');
   socket.emit("join", name);
+}
+
+window.newShip = () => {
+  socket.emit("new-ship", name);
 }
 
 // Player joins the game
 socket.on("joined", (player) => {
   currentPlayer = player;
   console.log('Player has joined', player);
-});
-
-document.getElementById("move-btn").addEventListener("click", () => {
-  const moveData = {dir:'x', amt: 10};
-  console.log('called move ',moveData);
-  socket.emit("move", moveData);
 });
 
 socket.on("update", newDisplayData => {
@@ -105,7 +103,7 @@ function setupPlanets() {
 
 }
 
-// Main loop runs 60 times per sec
+// Main loop
 function mainLoop(delta) {
   drawScreen();
 }
@@ -142,12 +140,13 @@ function drawPlanetSprite(planet) {
   if (!sprite) {
     let spriteSheet = window.PIXI.loader.resources[c.SPRITE_SHEET_JSON];
     sprite = new window.PIXI.Sprite(spriteSheet.textures[planet.file]);
+    console.log('loading planet ', planet);
     sprite.anchor.set(0.5, 0.5);
-    sprite.scale.set(0.5, 0.5); // radius
+    const scale = (planet.radius * 2) / sprite.width;
+    sprite.scale.set(scale, scale);
     sprite.visible = true;
     system.planetContainer.addChild(sprite);
     system.planetSprites[planet.id] = sprite;
-    console.log('new planet ', planet);
   }
   const { viewX, viewY } = getViewXy();
   const x = (planet.x - viewX) + (system.screenWidth / 2);
@@ -256,13 +255,25 @@ function getBulletSprite(bullet) {
   return sprite;
 }
 
+// Main drawing function (called repeatedly even if data hasn't changed)
 function drawScreen() {
   if (!displayData) {
     return;
   }
 
+  if (displayData.player) {
+    const newShipDiv = document.getElementById("new-ship-div");
+    const newShipDivDisplay = newShipDiv.style.display;
+    if (displayData.player.alive && newShipDivDisplay !== 'none') {
+      newShipDiv.style.display = 'none';
+    } else if (!displayData.player.alive && newShipDivDisplay !== 'block') {
+      newShipDiv.style.display = 'block';
+    }
+  }
+
   moveBackground();
 
+  // Clear the ship sprites for dead ships!
   for (const ship of displayData.ships) {
     drawShip(ship);
   }
@@ -315,27 +326,34 @@ function createExplosionSprite() {
 }
 
 function showExplosion(explosionData) {
-  if (explosionSprites.find(sprite => sprite.id === explosionData.id)) {
-    // Explosion is already showing
+  let sprite = explosionSprites.find(sprite => sprite.id === explosionData.id);
+  if (sprite && !sprite.playing && !sprite.visible) {
+    // We have a sprite that finished it's animation already
     return;
   }
-  let sprite = null;
-  for (let explosionSprite of explosionSprites) {
-    if (!explosionSprite.visible) {
-      sprite = explosionSprite;
-    }
+  if (!sprite) {
+    // Find a free explosionSprite to re-use
+    for (let explosionSprite of explosionSprites) {
+      if (!explosionSprite.visible) {
+        sprite = explosionSprite;
+        break;
+      }
+    } // for explosionSprite
   }
+  // Sprite is not showing and there are no free sprites we need to make a new one
   if (!sprite) {
     sprite = createExplosionSprite();
   }
   const { viewX, viewY } = getViewXy();
   const x = (explosionData.x - viewX) + (system.screenWidth / 2)
   const y = (explosionData.y - viewY) + (system.screenHeight / 2)
-  sprite.id = explosionData.id;
   sprite.x = x;
   sprite.y = y;
-  sprite.visible = true;
-  sprite.play(); // visible set to false when animation is done
+  if (!sprite.playing) {
+    sprite.id = explosionData.id;
+    sprite.visible = true;
+    sprite.play(); // visible set to false when animation is done
+  }
 }
 
 

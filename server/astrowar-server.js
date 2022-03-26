@@ -31,6 +31,12 @@ socketIo.on("connection", (socket) => {
     socket.emit("joined", player);
   });
 
+  socket.on("new-ship", () => {
+    const player = world.getPlayer(socket.id);
+    world.setupNewShipForPlayer(player);
+    console.log('Created new ship for player', player);
+  });
+
   socket.on("keypress", (keyData) => {
     const player = world.getPlayer(socket.id);
     if (!player) {

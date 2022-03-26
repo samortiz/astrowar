@@ -9,7 +9,7 @@ export const DOWN = 'arrowdown';
 export const FIRE = ' ';
 export const ALL_KEY_CODES = [RIGHT, LEFT, DOWN, UP, FIRE];
 
-export const EXPLOSION_TTL_TICKS = 10;
+export const EXPLOSION_TTL_TICKS = 30;
 
 export const PLANET_ROCK_FILE = "planet_rock.png";
 export const PLANET_RED_FILE = "planet_red.png";

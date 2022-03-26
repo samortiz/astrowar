@@ -1,6 +1,6 @@
 import * as util from './utils.js'
 import * as c from './server-constants.js'
-import {generateUniqueId} from "./utils.js";
+import {generateUniqueId, randomInt} from "./utils.js";
 import * as server from "./astrowar-server.js";
 
 export const world = {
@@ -12,11 +12,62 @@ export const world = {
 };
 
 function setupWorld() {
-  const planet = createPlanet(c.PLANET_ROCK_FILE, 100, 100, {titanium: 100, gold: 100, uranium: 100})
-  planet.x = 0;
-  planet.y = 0;
+  createPlanets();
 }
 setupWorld();
+
+function createPlanets() {
+  const planetCount = 40;
+  const ringRadius = 3000;
+  const minRadius = 100;
+  const maxRadius = 400;
+
+  for (let planetNum=0; planetNum<=planetCount; planetNum++) {
+    const planetType = c.PLANET_TYPES[randomInt(0, c.PLANET_TYPES.length-1)];
+    const radius = randomInt(minRadius, maxRadius);
+    const planet = createPlanet(planetType, radius, 100, {titanium: 100, gold: 100, uranium: 100})
+    planet.x = randomInt(100, ringRadius*2) - ringRadius;
+    planet.y = randomInt(100, ringRadius*2) - ringRadius;
+  }
+}
+
+
+export function createShip(playerId) {
+  return {
+    id: generateUniqueId(),
+    playerId: playerId,
+    alive: true,
+    objectType: c.OBJECT_TYPE_SHIP,
+    x: util.randomInt(100, 300) * (util.randomBool() ? 1 : -1),
+    y: util.randomInt(100, 300) * (util.randomBool() ? 1 : -1),
+    vx: 0,
+    vy: 0,
+    rotation: 0,
+    radius: 21,
+    armor: 100,
+    armorMax: 100,
+    gun: {
+      coolMax: 5,
+      cool: 0,
+      ttl: 40,
+      color: 'FF0000',
+      radius: 2,
+      damage: 50,
+      filename: c.BULLET_FILE,
+    }
+  };
+}
+
+export function setupNewShipForPlayer(player) {
+  // TODO Remove old ship
+  const ship = createShip(player.id);
+  world.ships.push(ship);
+  player.currentShip = ship;
+  player.x = ship.x;
+  player.y = ship.y;
+  player.alive = true;
+}
+
 
 export function createPlayer(socket, name) {
   const color = Math.floor(Math.random() * 16777215).toString(16);
@@ -30,33 +81,7 @@ export function createPlayer(socket, name) {
     color
   };
   world.players.push(player);
-  const ship = {
-    id: generateUniqueId(),
-    playerId: player.id,
-    alive: true,
-    objectType: c.OBJECT_TYPE_SHIP,
-    x: util.randomInt(100, 300) * (util.randomBool() ? 1 : -1),
-    y: util.randomInt(100, 300) * (util.randomBool() ? 1 : -1),
-    vx: 0,
-    vy: 0,
-    rotation: 0,
-    radius: 21,
-    armor: 100,
-    armorMax : 100,
-    gun: {
-      coolMax: 5,
-      cool: 0,
-      ttl: 40,
-      color: 'FF0000',
-      radius: 2,
-      damage: 50,
-      filename: c.BULLET_FILE,
-    }
-  };
-  world.ships.push(ship);
-  player.currentShip = ship;
-  player.x = ship.x;
-  player.y = ship.y;
+  setupNewShipForPlayer(player);
   server.playerSockets[player.socketId] = socket;
   console.log("Added player ", player);
   return player;
@@ -145,6 +170,6 @@ export function createExplosion(x, y) {
   explosion.id = generateUniqueId();
   explosion.x = x;
   explosion.y = y;
-  explosion.ttl =  c.EXPLOSION_TTL_TICKS;
+  explosion.ttl = c.EXPLOSION_TTL_TICKS;
 }
 

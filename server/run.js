@@ -141,8 +141,9 @@ export function mainServerLoop() {
     const hitObject = hitsPlanetOrShip(ship.id, ship.x, ship.y, ship.radius);
     if (hitObject) {
       if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
-        console.log('TODO ship hit ship', hitObject);
+        const hitArmor = hitObject.armor;
         damageShip(hitObject, ship.armor);
+        damageShip(ship, hitArmor);
       }
       if (hitObject.objectType === c.OBJECT_TYPE_PLANET) {
         ship.armor = 0;
