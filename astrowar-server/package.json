@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server/astrowar-server.js",
-    "dev": "NODE_ENV=development nodemon --watch . --inspect server/astrowar-server.js"
+    "start": "node src/astrowar-server.js",
+    "dev": "NODE_ENV=development nodemon --watch . --inspect src/astrowar-server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
