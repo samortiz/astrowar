@@ -17,7 +17,7 @@ export function firePrimaryWeapon(ship) {
   const x = ship.x + ((ship.radius + gun.radius + 2) * Math.cos(ship.rotation));
   const y = ship.y + ((ship.radius + gun.radius + 2) * Math.sin(ship.rotation));
   gun.cool = gun.coolMax;
-  w.createBullet(x, y, vx, vy, gun);
+  w.createBullet(x, y, vx, vy, gun, ship.rotation);
 }
 
 export function propelShip(ship) {
@@ -104,25 +104,24 @@ export function damageShip(ship, damage) {
 }
 
 export function mainServerLoop() {
-  // Move bullets
-  for (const bullet of world.bullets) {
-    if (bullet.alive) {
-      bullet.x = bullet.x + bullet.vx;
-      bullet.y = bullet.y + bullet.vy;
-      bullet.ttl = bullet.ttl - 1;
-      if (bullet.ttl < 0) {
-        bullet.alive = false;
-      }
-      const hitObject = hitsPlanetOrShip(bullet.id, bullet.x, bullet.y, bullet.radius);
-      if (hitObject) {
-        bullet.alive = false;
-        bullet.ttl = 0;
-        if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
-          damageShip(hitObject, bullet.damage);
-        }
+  // Move bullets (reverse so we can remove dead bullets as we go)
+  for (let i=world.bullets.length-1; i>=0; i--) {
+    const bullet = world.bullets[i];
+    bullet.x = bullet.x + bullet.vx;
+    bullet.y = bullet.y + bullet.vy;
+    bullet.ttl = bullet.ttl - 1;
+    const hitObject = hitsPlanetOrShip(bullet.id, bullet.x, bullet.y, bullet.radius);
+    if (hitObject) {
+      bullet.ttl = 0;
+      if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
+        damageShip(hitObject, bullet.damage);
       }
     }
-  }
+    if (bullet.ttl <=0) {
+      // Remove bullet from bullets array
+      world.bullets.splice(i, 1);
+    }
+  } // for bullet
 
   // Check for player actions
   for (let player of world.players) {

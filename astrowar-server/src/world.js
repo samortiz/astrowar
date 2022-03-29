@@ -1,6 +1,6 @@
 import * as util from './utils.js'
 import * as c from './server-constants.js'
-import {generateUniqueId, randomInt} from "./utils.js";
+import {randomInt} from "./utils.js";
 import * as server from "./astrowar-server.js";
 
 export const world = {
@@ -9,6 +9,7 @@ export const world = {
   planets: [],
   bullets: [],
   explosions: [],
+  maxId: 1000, // unique to back-end only (may conflict with BE id)
 };
 
 function setupWorld() {
@@ -17,7 +18,7 @@ function setupWorld() {
 setupWorld();
 
 function createPlanets() {
-  const planetCount = 40;
+  const planetCount = 20;
   const ringRadius = 3000;
   const minRadius = 100;
   const maxRadius = 400;
@@ -43,23 +44,26 @@ export function createShip(playerId) {
     vx: 0,
     vy: 0,
     rotation: 0,
-    radius: 21,
     armor: 100,
     armorMax: 100,
+    imageFile: c.SHIP_EXPLORER_FILE,
+    radius: 21, // should match scale
     gun: {
       coolMax: 5,
       cool: 0,
       ttl: 40,
-      color: 'FF0000',
-      radius: 2,
+      radius: 10,
       damage: 50,
-      filename: c.BULLET_FILE,
+      imageFile: c.BULLET_FILE,
     }
   };
 }
 
 export function setupNewShipForPlayer(player) {
-  // TODO Remove old ship
+  // Remove the old ship (if it's still around)
+  if (player.currentShip && player.currentShip.alive) {
+    player.currentShip.alive = false;
+  }
   const ship = createShip(player.id);
   world.ships.push(ship);
   player.currentShip = ship;
@@ -105,12 +109,11 @@ export function getPlayerSocket(socketId) {
   return socket;
 }
 
-
-export function createPlanet(file, radius, mass, resources) {
+export function createPlanet(imageFile, radius, mass, resources) {
   let planet = {};
   planet.id = generateUniqueId();
   planet.objectType = c.OBJECT_TYPE_PLANET;
-  planet.file = file;
+  planet.imageFile = imageFile;
   planet.x = 0; // temp should get reset
   planet.y = 0; // temp should get reset
   planet.mass = mass;
@@ -127,31 +130,21 @@ export function createPlanet(file, radius, mass, resources) {
 }
 
 // Makes a new bullet (reusing objects in the world.bullets array)
-export function createBullet(x, y, vx, vy, gun) {
-  let bullet = null;
-  for (const existingBullet of world.bullets) {
-    if (!existingBullet.alive) {
-      bullet = existingBullet;
-    }
-  }
-  // No dead bullet found, so we'll make a new one
-  if (!bullet) {
-    bullet = {};
-    world.bullets.push(bullet);
-  }
-  // Set all the bullet fields
-  bullet.id = util.generateUniqueId();
-  bullet.objectType = c.OBJECT_TYPE_BULLET;
-  bullet.alive = true;
-  bullet.x = x;
-  bullet.y = y;
-  bullet.vx = vx;
-  bullet.vy = vy;
-  bullet.ttl = gun.ttl;
-  bullet.color = gun.color;
-  bullet.radius = gun.radius;
-  bullet.damage = gun.damage;
-  bullet.filename = gun.filename;
+export function createBullet(x, y, vx, vy, gun, rotation) {
+  const bullet = {
+    id: generateUniqueId(),
+    objectType: c.OBJECT_TYPE_BULLET,
+    x: x,
+    y: y,
+    vx: vx,
+    vy: vy,
+    ttl: gun.ttl,
+    radius: gun.radius,
+    damage: gun.damage,
+    imageFile: gun.imageFile,
+    rotation: rotation,
+  };
+  world.bullets.push(bullet);
   return bullet;
 }
 
@@ -173,3 +166,7 @@ export function createExplosion(x, y) {
   explosion.ttl = c.EXPLOSION_TTL_TICKS;
 }
 
+export function generateUniqueId() {
+  world.maxId = world.maxId + 1;
+  return world.maxId;
+}

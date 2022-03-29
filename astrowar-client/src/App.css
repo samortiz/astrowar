@@ -1,38 +1,79 @@
-.App {
-  text-align: center;
+.info-panel {
+  vertical-align: top;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.viewport {
+  border-right: 2px solid #404040;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.viewport canvas {
+  display:block; /* this prevents a few extra pixels from appearing at the bottom of the viewport */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.root-app {
+  background-color: #202020;
+  color: #ccc;
 }
 
-.App-link {
-  color: #61dafb;
+.root-app td {
+  vertical-align: top;
+  border-spacing: 0;
+  padding:0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.scroll-box {
+  height: 100%;
+  overflow-y:auto;
+}
+
+input {
+  background-color: #C5C5C5;
+  color: black;
+}
+
+button {
+  border-color: #e0e0ff;
+  background-color: #d0d0d5;
+}
+
+button:active {
+  background-color: #f0f0ff;
+}
+
+button:disabled,
+button[disabled] {
+  background-color: #aaa;
+  color: #555;
+  border-color: #ccc;
+}
+
+/* Tab bg/fg */
+.nav-item {
+  background-color: #555;
+  color: #ccc;
+}
+
+/* Tab when clicking */
+a.nav-item:hover {
+  border-color: #55f;
+  color: #eef;
+}
+
+.nav-tabs a.nav-link {
+  border-right:1px solid black;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  padding:3px 3px;
+}
+
+/* Active tab */
+.nav-tabs a.nav-link.active {
+  background-color: #aaa;
+  color: black;
+  border-color: #ccc
+}
+
+/* Dark line below the tabs */
+nav.nav-tabs {
+  border-bottom: 1px solid #101010;
 }

@@ -1,4 +1,4 @@
-import {world} from "./world.js";
+import * as w from "./world.js";
 
 export function getShipDisplay(ship) {
   if (ship == null) {
@@ -9,7 +9,9 @@ export function getShipDisplay(ship) {
     alive: ship.alive,
     x: ship.x,
     y: ship.y,
-    rotation: ship.rotation
+    rotation: ship.rotation,
+    imageFile: ship.imageFile,
+    radius: ship.radius,
   };
 }
 
@@ -19,7 +21,7 @@ export function getPlanetDisplay(planet) {
     x: planet.x,
     y: planet.y,
     radius: planet.radius,
-    file: planet.file
+    imageFile: planet.imageFile
   };
 }
 
@@ -28,8 +30,9 @@ export function getBulletDisplay(bullet) {
     id: bullet.id,
     x: bullet.x,
     y: bullet.y,
-    filename: bullet.filename,
-    color: bullet.color
+    radius: bullet.radius,
+    imageFile: bullet.imageFile,
+    rotation: bullet.rotation,
   };
 }
 
@@ -40,6 +43,14 @@ export function getExplosionDisplay(explosion) {
     y: explosion.y,
     ttl: explosion.ttl
   };
+}
+
+export function getAllPlanetsDisplay() {
+  const planets = [];
+  for (let planet of w.world.planets) {
+    planets.push(getPlanetDisplay(planet));
+  }
+  return planets;
 }
 
 export function getDisplay(player) {
@@ -54,25 +65,27 @@ export function getDisplay(player) {
   }
 
   const ships = [];
-  for (let ship of world.ships) {
-    // Check if ship is alive
-    ships.push(getShipDisplay(ship));
-  }
-  const planets = [];
-  for (let planet of world.planets) {
-    planets.push(getPlanetDisplay(planet));
-  }
-  const bullets = [];
-  for (let bullet of world.bullets) {
-    if (bullet.alive) {
-      bullets.push(getBulletDisplay(bullet));
+  for (let ship of w.world.ships) {
+    if (ship.alive) {
+      ships.push(getShipDisplay(ship));
     }
   }
+  const bullets = [];
+  for (let bullet of w.world.bullets) {
+    bullets.push(getBulletDisplay(bullet));
+  }
   const explosions = [];
-  for (let explosion of world.explosions) {
+  for (let explosion of w.world.explosions) {
     if (explosion.ttl > 0) {
       explosions.push(getExplosionDisplay(explosion));
     }
   }
-  return {player: playerDisplay, ships, planets, bullets, explosions};
+  return {player: playerDisplay, ships, bullets, explosions};
+}
+
+
+export function getJoinData(socket, name) {
+  const player = w.createPlayer(socket, name);
+  const planets = getAllPlanetsDisplay();
+  return {player, planets};
 }

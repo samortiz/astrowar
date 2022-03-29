@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 /**
  * Returns the distance between two points
  */
@@ -75,9 +73,5 @@ export function getPointFrom(startX, startY, dir, distance) {
   let x = startX + (distance * Math.cos(dir));
   let y = startY + (distance * Math.sin(dir));
   return {x,y};
-}
-
-export function generateUniqueId() {
-  return crypto.randomBytes(16).toString("hex");
 }
 

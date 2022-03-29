@@ -1,0 +1,35 @@
+.planet-info {
+
+}
+
+.transfer-input {
+  width:30px;
+  max-width:30px;
+}
+
+.transfer-button {
+  font-weight:bold;
+  padding-left:3px;
+  padding-right:3px;
+}
+
+.section { 
+  padding-top:10px;
+}
+
+.build-button {
+  padding:10px;
+}
+
+.row-item {
+  margin-left:10px;
+}
+
+.resource-table {
+  margin-top:10px;
+}
+
+.resource-table td, .resource-table th {
+  padding-left:5px;
+  padding-right:5px;
+}
