@@ -1,6 +1,5 @@
 AstroWar
 
-for development:
-  npm run dev 
+This has a server and client apps.   
 
 

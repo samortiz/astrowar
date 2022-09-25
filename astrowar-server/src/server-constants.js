@@ -49,3 +49,34 @@ export const SHIP_HEAVY_FILE = "ship_heavy.png";
 export const SHIP_MISSILE_FILE = "ship_missile.png";
 export const SHIP_RED_WINGS_FILE = "ship_red_wings.png";
 export const SHIP_SKELETON_FILE = "ship_skeleton.png";
+
+export const PLAYER_COLORS = ["0xFF1050","0x20CC20","0x5050EE","0xFFFF00","0xFF00FF","0x00FFFF","0xAA5510","0x999999"];
+
+export const GRAVITATIONAL_CONST = 2;
+export const PLANET_DENSITY = new Map();
+PLANET_DENSITY.set(PLANET_ROCK_FILE, 0.3);
+PLANET_DENSITY.set(PLANET_RED_FILE, 0.3);
+PLANET_DENSITY.set(PLANET_GREEN_FILE, 0.3);
+PLANET_DENSITY.set(PLANET_PURPLE_FILE, 0.3);
+PLANET_DENSITY.set(WORMHOLE_SPRITE, 15);
+
+export const OUTER_RING_MIN = 50000; // This is where we dump extra planets that won't fit into the universe
+export const OUTER_RING_MAX = 60000;
+
+export const UNIVERSE_RINGS = [
+  {
+    planetCount: 25,
+    minDist: 6000, maxDist: 8000,
+    minDistToOtherPlanet: 150,
+    minPlanetRadius: 300, maxPlanetRadius: 500,
+    planetFiles: [PLANET_GREEN_FILE],
+  },
+  {
+    planetCount: 400,
+    minDist: 1500, maxDist: 12000,
+    minDistToOtherPlanet: 200,
+    minPlanetRadius: 150, maxPlanetRadius: 500,
+    planetFiles: [PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
+  },
+
+];

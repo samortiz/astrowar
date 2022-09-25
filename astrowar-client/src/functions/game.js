@@ -15,6 +15,7 @@ export function createEmptyWorld() {
     },
     currentPlayer: null,
     planets: [], // planet data
+    selectedPlanet: null,
     gameTickCount: 0,
     maxId: 1000, // generating unique id (unique to front-end only)
     displayData: null, // sent from the server
@@ -24,7 +25,6 @@ export function createEmptyWorld() {
       keys: {}, // Global keypress handlers
       buttonKeyDown : {up:false, right:false, down:false, left:false, shoot:false}, // true when a button is depressed
       app: null, // Pixi App
-      gameState: c.GAME_STATE.INIT, // Current game state
       isTyping: false, // used to stop keypress events ('w') when user is typing in input
       gameLoop: null, // loop function in this state
       bgSprite: null, // star background
@@ -84,6 +84,26 @@ export function setupSpriteContainers() {
 
   spriteContainers.minimap = new window.PIXI.Container();
   mainStage.addChild(spriteContainers.minimap);
+  setupMiniMap();
+}
+
+export function setupMiniMap() {
+  let container = window.world.system.spriteContainers.minimap;
+  let miniMapContainer = new window.PIXI.Container();
+  container.addChild(miniMapContainer);
+
+  // Mask so drawings don't spill out of the map
+  let mask = new window.PIXI.Graphics();
+  mask.drawRect(0, c.SCREEN_HEIGHT - c.MINIMAP_HEIGHT, c.MINIMAP_WIDTH, c.SCREEN_HEIGHT);
+  mask.renderable = true;
+  mask.cacheAsBitmap = true;
+  miniMapContainer.addChild(mask);
+  miniMapContainer.mask = mask;
+
+  // Graphics for drawing shapes on
+  let g = new window.PIXI.Graphics();
+  miniMapContainer.addChild(g);
+  window.world.system.miniMapGraphics = g;
 }
 
 export function createBackground() {
@@ -94,21 +114,6 @@ export function createBackground() {
     c.SCREEN_HEIGHT,
   );
   container.addChild(window.world.system.bgSprite);
-}
-
-export function changeGameState(newState) {
-  const world = window.world;
-  world.system.gameState = newState;
-  console.log('set state to ', newState);
-  if (newState === c.GAME_STATE.FLY) {
-    fly.enterFlyState();
-    world.system.gameLoop = fly.flyLoop;
-  } else if (newState === c.GAME_STATE.MANAGE) {
-    manage.enterManageState();
-    world.system.gameLoop = manage.manageLoop;
-  } else {
-    world.system.gameLoop = null;
-  }
 }
 
 /**

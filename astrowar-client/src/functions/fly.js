@@ -1,17 +1,12 @@
 import {c, game, manage, utils} from './';
 import {generateUniqueId} from "./game";
 
-export function enterFlyState() {
-  console.log("Take off");
-}
-
 // Main play mode - flying
 export function flyLoop(delta) {
   if (delta > 1.005) {
     console.log('Lagging with delta=' + delta);
   }
   drawScreen();
-
 }
 
 // Main drawing function (called repeatedly even if data hasn't changed)
@@ -20,13 +15,20 @@ export function drawScreen() {
   if (!displayData) {
     return;
   }
+  updatePlayer(displayData.player);
   moveBackground();
   drawAllPlanets();
   drawAllShips(displayData.ships);
   drawAllBullets(displayData.bullets);
   drawExplosions(displayData.explosions);
+  drawMiniMap();
 }
 
+
+function updatePlayer(player) {
+  window.world.view.x = player.x;
+  window.world.view.y = player.y;
+}
 
 function moveBackground() {
   const { viewX, viewY } = game.getViewXy();
@@ -253,4 +255,49 @@ function getExplosionSprite(explosion) {
   };
   console.log('new explosion');
   return sprite;
+}
+
+export function drawMiniMap() {
+  let g = window.world.system.miniMapGraphics;
+  let view = window.world.view;
+  let l = 0;
+  let t = c.SCREEN_HEIGHT - c.MINIMAP_HEIGHT;
+  let r = c.MINIMAP_WIDTH;
+  let b = c.SCREEN_HEIGHT;
+  g.clear();
+  // Background
+  g.beginFill(c.MINIMAP_BACKGROUND_COLOR);
+  g.lineStyle(1, c.MINIMAP_BORDER_COLOR);
+  g.drawRect(l, t, r, b);
+  g.endFill();
+  // Planets
+  for (let planet of window.world.planets) {
+    if (planetOnMap(view, planet)) {
+      let x = l + c.HALF_MINIMAP_WIDTH + ((planet.x - view.x) * c.MINIMAP_SCALE_X);
+      let y = t + c.HALF_MINIMAP_HEIGHT + ((planet.y - view.y) * c.MINIMAP_SCALE_Y);
+      const planetColor = window.world.selectedPlanet === planet ? c.MINIMAP_SELECTED_PLANET_COLOR : c.PLANET_COLORS[planet.imageFile];
+      g.lineStyle(2, planetColor);
+      g.beginFill(planetColor);
+      g.drawCircle(x, y, planet.radius * c.MINIMAP_SCALE_X);
+      g.endFill();
+    }
+  }
+  // Ships
+  for (let ship of window.world.displayData.ships) {
+    const x = l + c.HALF_MINIMAP_WIDTH + ((ship.x - view.x) * c.MINIMAP_SCALE_X);
+    const y = t + c.HALF_MINIMAP_HEIGHT + ((ship.y - view.y) * c.MINIMAP_SCALE_Y);
+    g.lineStyle(1, ship.color);
+    g.beginFill(ship.color);
+    g.drawCircle(x, y, 2);
+    g.endFill();
+  }
+
+}
+
+function planetOnMap(view, planet) {
+  // Right side
+  return !((view.x + c.HALF_MINIMAP_VIEW_WIDTH + planet.radius < planet.x) || // Right
+      (view.x - c.HALF_MINIMAP_VIEW_WIDTH - planet.radius > planet.x) || // Left
+      (view.y + c.HALF_MINIMAP_VIEW_HEIGHT + planet.radius < planet.y) || // Bottom
+      (view.y - c.HALF_MINIMAP_VIEW_HEIGHT - planet.radius > planet.y));
 }

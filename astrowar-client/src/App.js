@@ -52,7 +52,7 @@ export default class App extends React.Component {
     game.setupWorld(); // includes setting up the socket connection
     this.setupKeyboardListeners(window.world.system.socket);
     this.setupWindowResizeListener();
-    game.changeGameState(c.GAME_STATE.FLY);
+    window.world.system.gameLoop = fly.flyLoop;
     window.world.system.app.renderer.plugins.interaction.on('pointerdown', (event) => {
       game.click(event);
     });

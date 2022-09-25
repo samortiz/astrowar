@@ -2,6 +2,7 @@ import * as c  from './server-constants.js'
 import * as w from './world.js'
 import * as run from './run.js'
 import * as display from './display.js'
+import * as manage from './manage.js'
 import express from "express"
 import cors from "cors"
 import { Server } from "socket.io"
@@ -53,6 +54,11 @@ socketIo.on("connection", (socket) => {
   socket.on("keypress", (keyData) => {
     const player = w.getPlayer(socket.id);
     if (!player) {
+      console.log("Cannot press keys without player");
+      return;
+    }
+
+    if (!player) {
       return;
     }
     let keysForThisPlayer = playerKeys[player.id];
@@ -63,6 +69,72 @@ socketIo.on("connection", (socket) => {
     keysForThisPlayer[keyData.key] = keyData.isDown;
     console.log('received key ', keyData);
   });
+
+  // Management commands
+  socket.on("load-ship", () => {
+    console.log("loading ship");
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot manage without player");
+      return;
+    }
+    if (player.currentShip && player.selectedPlanet) {
+      const ship = player.currentShip;
+      const planet = player.selectedPlanet;
+      manage.loadShip(ship, planet);
+    }
+  });
+
+  socket.on("unload-ship", () => {
+    console.log("unloading ship");
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot manage without player");
+      return;
+    }
+    if (player.currentShip && player.selectedPlanet) {
+      const ship = player.currentShip;
+      const planet = player.selectedPlanet;
+      manage.unloadShip(ship, planet);
+    }
+  });
+
+  socket.on("repair-ship", () => {
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot manage without player");
+      return;
+    }
+    if (player.currentShip && player.selectedPlanet) {
+      const ship = player.currentShip;
+      const planet = player.selectedPlanet;
+      manage.repairShip(ship, planet)
+    }
+  });
+
+  socket.on("transfer-resource", (transferData) => {
+    console.log("transfer ", transferData);
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot manage without player");
+      return;
+    }
+    if (player.currentShip && player.selectedPlanet) {
+      const ship = player.currentShip;
+      const planet = player.selectedPlanet;
+      const sourceId = transferData.sourceId;
+      const targetId = transferData.targetId;
+      // Source and target must be the player's current ship and planet
+      let source = sourceId === ship.id ? ship : (sourceId === planet.id ? planet : null);
+      let target = targetId === ship.id ? ship : (targetId === planet.id ? planet : null);
+      if (source && target) {
+        manage.transferResource(source.resources, target.resources, transferData.resourceType, transferData.amt);
+      } else {
+        console.log("Player tried to transfer resources to/from not his current ship and planet. source=", source, " target=",target);
+      }
+    }
+  });
+
 });
 
 

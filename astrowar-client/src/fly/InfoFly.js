@@ -4,7 +4,9 @@ import {HEATBAR, Heatbar} from "./Heatbar";
 
 export function InfoFly() {
   const world = window.world;
-  const ship = world.ship;
+  const player = world.displayData?.player;
+  const ship = player?.currentShip;
+
 
   function playerJoinsGame() {
     console.log('client calling join ');
@@ -19,6 +21,7 @@ export function InfoFly() {
 
   function printInfo() {
     console.log('display ', world.displayData);
+    console.log('world ', world);
     world.system.socket.emit("info");
   }
 
@@ -26,26 +29,25 @@ export function InfoFly() {
     <div className='section'
          style={{backgroundImage: 'url("images/metalbackground.png")', backgroundSize: 'cover', height: '100%', paddingLeft:'3px'}}>
 
-      {!world.displayData && <div>
+      {!player &&<div>
         <button onClick={() => playerJoinsGame()}> Join </button>
       </div>}
 
-      {world.displayData && !world.displayData.player.alive && <div>
+      {world.displayData && player && !ship?.alive && <div>
         <button onClick={() => newShip()}> New Ship </button>
       </div>}
 
-      <br/> <br/>
+      <br/><br/>
       <button onClick={() => printInfo()}> Info </button>
 
-      {ship &&
+      {player && ship?.alive &&
       <div className='top-row'>
         <div>
-          <div>{ship.name}</div>
+          <div>Ship</div>
           <table>
             <thead>
             <tr>
               <th style={{paddingRight: '10px'}}>Armor</th>
-              <th>Shield</th>
             </tr>
             </thead>
             <tbody>
@@ -58,8 +60,6 @@ export function InfoFly() {
               <td>
                 {Math.floor(ship.armor)} / {ship.armorMax}
               </td>
-              <td></td>
-              <td></td>
             </tr>
             </tbody>
           </table>
@@ -88,6 +88,10 @@ export function InfoFly() {
               <tr>
                 <td>Uranium</td>
                 <td>{Math.floor(ship.resources.uranium)}</td>
+              </tr>
+              <tr>
+                <td>Death Count&nbsp;</td>
+                <td>{player.deathCount}</td>
               </tr>
               </tbody>
             </table>

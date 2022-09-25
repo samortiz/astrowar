@@ -6,6 +6,8 @@ export function getShipDisplay(ship) {
   }
   return {
     id: ship.id,
+    playerId: ship.playerId,
+    color: ship.color,
     alive: ship.alive,
     x: ship.x,
     y: ship.y,
@@ -58,10 +60,12 @@ export function getDisplay(player) {
 
   const playerDisplay = {
     id: player.id,
+    color: player.color,
+    deathCount : player.deathCount,
     x: currentShip ? currentShip.x : player.x,
     y: currentShip ? currentShip.y : player.y,
-    currentShipId: currentShip.id,
-    alive: currentShip.alive,
+    currentShip: currentShip,
+    selectedPlanet: player.selectedPlanet,
   }
 
   const ships = [];
