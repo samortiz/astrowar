@@ -1,5 +1,4 @@
 import React, {useState} from 'react';
-import {c} from '../functions';
 import './ManagePlanet.css';
 import 'font-awesome/css/font-awesome.min.css';
 
@@ -12,8 +11,6 @@ export function ManagePlanet() {
   let planet = player.selectedPlanet;
   let ship = player.currentShip;
   let socket = window.world.system.socket;
-
-  console.log('displayData ', window.world.displayData);
 
   function unloadShip() {
     socket.emit("unload-ship");
@@ -28,9 +25,7 @@ export function ManagePlanet() {
   }
 
   function transferResource(source, target, resourceType, amt) {
-    console.log("Source=", source, " target=", target);
     const transferData = {sourceId:source.id, targetId:target.id, resourceType:resourceType, amt:amt};
-    console.log('transferData ', transferData);
     socket.emit("transfer-resource", transferData);
   }
 

@@ -1,0 +1,13 @@
+.factory-button {
+  white-space: nowrap;
+  margin: 3px;
+}
+
+.cost {
+  white-space: nowrap;
+}
+
+.factory-row {
+  padding-left: 10px;
+  padding-top: 3px;
+}

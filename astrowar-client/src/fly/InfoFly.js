@@ -1,12 +1,14 @@
 import React from 'react';
 import './InfoFly.css';
+import * as c from '../functions/client-constants.js';
 import {HEATBAR, Heatbar} from "./Heatbar";
+import {PushButton} from "./PushButton";
+import {StatusButton} from "./StatusButton";
 
 export function InfoFly() {
   const world = window.world;
   const player = world.displayData?.player;
   const ship = player?.currentShip;
-
 
   function playerJoinsGame() {
     console.log('client calling join ');
@@ -23,6 +25,10 @@ export function InfoFly() {
     console.log('display ', world.displayData);
     console.log('world ', world);
     world.system.socket.emit("info");
+  }
+
+  function setSelectedSecondaryWeaponIndex(ship, index) {
+    world.system.socket.emit("select-secondary", {selectedSecondaryWeaponIndex: index});
   }
 
   return (
@@ -97,9 +103,42 @@ export function InfoFly() {
             </table>
           </div>
         </div>
+
+        <table>
+          <tbody>
+          <tr>
+            <td>
+              <div>
+                <b>Equip (max {ship.equipMax})</b>
+              </div>
+              <table>
+                <tbody>
+                {ship.equip.map((equip, i) => {
+                  return <tr key={i} className='equip'>
+                    <td>
+                      {equip.type === c.EQUIP_TYPE_SECONDARY_WEAPON &&
+                      <PushButton selected={i === ship.selectedSecondaryWeaponIndex} onChange={() => {
+                        setSelectedSecondaryWeaponIndex(ship, i);
+                      }}/>}
+                    </td>
+                    <td>
+                      <StatusButton curr={equip.coolTime - equip.cool} max={equip.coolTime}/>
+                    </td>
+                    <td>
+                      {equip.name}
+                    </td>
+                  </tr>
+                })}
+                </tbody>
+              </table>
+            </td>
+            <td style={{paddingLeft:'10px'}}> </td>
+          </tr>
+          </tbody>
+        </table>
+
       </div>
       }
-
     </div>
   );
 }

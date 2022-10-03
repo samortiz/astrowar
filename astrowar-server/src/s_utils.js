@@ -1,4 +1,4 @@
-import * as c from "./server-constants.js";
+import * as c from "./s_constants.js";
 
 /**
  * Returns the distance between two points
@@ -91,3 +91,41 @@ export function calcGravity(x, y, planet) {
   let gravityY = c.GRAVITATIONAL_CONST * planet.mass / Math.pow(distance, 2) * -Math.cos(gravityDirection);
   return {x:gravityX, y:gravityY, dir:gravityDirection};
 }
+
+/**
+ * Does a deep clone of an object
+ * NOTE: Only clones things that JSON serialize!  No functions or classes with prototype stuff
+ */
+export function cloneDeep(obj) {
+  if (!obj) {
+    return null;
+  }
+  return JSON.parse(JSON.stringify(obj))
+}
+
+/**
+ * @return Return the first equip matching the type, if none found returns null
+ */
+export function getEquip(ship, equipType) {
+  if (!ship || !equipType || !ship.equip) {
+    return null;
+  }
+  return ship.equip.find(e => e.type === equipType);
+}
+
+export function arrayRemoveItemOnce(arr, value) {
+  const index = arr.indexOf(value);
+  if (index > -1) {
+    arr.splice(index, 1);
+  }
+  return arr;
+}
+
+/**
+ * @param val as an int or default if the supplied item is null or NaN
+ * @param def default value if val is not a number
+ */
+export function getInt(val, def) {
+  return parseInt(val) || def;
+}
+

@@ -1,6 +1,8 @@
-import * as utils from './utils.js'
-import * as c from './server-constants.js'
+import * as utils from './s_utils.js'
+import * as c from './s_constants.js'
+import * as b from './s_blueprints.js'
 import * as server from "./astrowar-server.js";
+import * as manage from './s_manage.js'
 
 export const world = {
   players: [],
@@ -32,9 +34,9 @@ function createPlanets() {
       } else if (fileName === c.PLANET_PURPLE_FILE) {
         generateResources.uranium = 1;
       } else if (fileName === c.PLANET_GREEN_FILE) {
-        generateResources.titanium = 1;
-        generateResources.gold = 1;
-        generateResources.uranium = 1;
+        generateResources.titanium = 2;
+        generateResources.gold = 2;
+        generateResources.uranium = 2;
       }
 
       // Setup the planet
@@ -92,49 +94,73 @@ function nearestPlanetDistance(origPlanet, x, y) {
   return {nearestPlanet: nearestPlanet, nearestPlanetDist: minDist};
 }
 
-export function createShip(player) {
-  return {
-    id: generateUniqueId(),
-    playerId: player.id,
-    color: player.color,
-    alive: true,
-    landed: false,
-    objectType: c.OBJECT_TYPE_SHIP,
-    x: utils.randomInt(100, 300) * (utils.randomBool() ? 1 : -1),
-    y: utils.randomInt(100, 300) * (utils.randomBool() ? 1 : -1),
-    vx: 0,
-    vy: 0,
-    rotation: 0,
-    armor: 100,
-    armorMax: 100,
-    imageFile: c.SHIP_EXPLORER_FILE,
-    radius: 21, // should match scale
-    gun: {
-      coolMax: 5,
-      cool: 0,
-      ttl: 40,
-      radius: 10,
-      damage: 10,
-      speed: 15,
-      imageFile: c.BULLET_FILE,
-    },
-    resources: {titanium: 0, gold: 0, uranium: 0},
-  };
+export function createShip(shipBlueprint, player) {
+  const ship  = utils.cloneDeep(shipBlueprint);
+  ship.id =  generateUniqueId();
+  ship.playerId = player?.id;
+  ship.color = player?.color;
+  ship.alive = true;
+  ship.inStorage = false;
+  ship.landed = false;
+  ship.x = player.x;
+  ship.y = player.y;
+  ship.vx = 0;
+  ship.vy = 0;
+  ship.rotation = 0;
+  ship.radius =  21;  // This needs to match the scale and imageSize (how to calculate on the server?)
+  ship.resources = {titanium: 0, gold: 0, uranium: 0};
+  // Create copies of all the equip on the ship
+  ship.equip = []
+  for (const equipBlueprint of shipBlueprint.equip) {
+    ship.equip.push(manage.makeEquip(equipBlueprint));
+  }
+  ship.selectedSecondaryWeaponIndex = null; // no secondary weapon selected initially
+  return ship;
 }
 
 export function setupNewShipForPlayer(player) {
+  if (!player) {
+    console.warn("Cannot make new ship without a player");
+    return null;
+  }
   // Remove the old ship (if it's still around)
   if (player && player.currentShip && player.currentShip.alive) {
     player.currentShip.alive = false;
   }
-  const ship = createShip(player);
+  player.x = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
+  player.y = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
+  const ship = createShip(b.SHIP_EXPLORER, player);
   world.ships.push(ship);
   player.currentShip = ship;
-  player.x = ship.x;
-  player.y = ship.y;
   player.alive = true;
 }
 
+export function startUsingShip(player, newShip, planet) {
+  if (!player) {
+    console.warn("Cannot use ship without a player");
+    return null;
+  }
+  const oldShip = player.currentShip;
+  newShip.playerId = player.id;
+  newShip.color = player.color;
+  // Remove the new ship from the planet
+  const shipIndex = planet.ships.find(s => s.id === newShip.id);
+  if (shipIndex) {
+    planet.ships.splice(shipIndex, 1);
+  } else {
+    console.warn("unable to remove newShip ", newShip, " from ", planet.ships);
+  }
+  // Add the old ship to the planet
+  planet.ships.push(oldShip);
+  oldShip.inStorage = true;
+  // Set the new ship's location
+  player.x = oldShip.x;
+  player.y = oldShip.y;
+  newShip.x = oldShip.x;
+  newShip.y = oldShip.y;
+  newShip.inStorage = false;
+  player.currentShip = newShip;
+}
 
 export function createPlayer(socket, name) {
   const color = getRandomPlayerColor();
@@ -212,10 +238,10 @@ export function createBullet(x, y, vx, vy, gun, rotation) {
     y: y,
     vx: vx,
     vy: vy,
-    ttl: gun.ttl,
-    radius: gun.radius,
+    ttl: gun.lifetime,
     damage: gun.damage,
     imageFile: gun.imageFile,
+    radius: gun.bulletRadius,
     rotation: rotation,
   };
   world.bullets.push(bullet);

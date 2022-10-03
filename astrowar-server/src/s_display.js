@@ -1,4 +1,5 @@
-import * as w from "./world.js";
+import * as w from "./s_world.js";
+import * as b from "./s_blueprints.js";
 
 export function getShipDisplay(ship) {
   if (ship == null) {
@@ -70,7 +71,7 @@ export function getDisplay(player) {
 
   const ships = [];
   for (let ship of w.world.ships) {
-    if (ship.alive) {
+    if (ship.alive && !ship.inStorage) {
       ships.push(getShipDisplay(ship));
     }
   }
@@ -87,9 +88,14 @@ export function getDisplay(player) {
   return {player: playerDisplay, ships, bullets, explosions};
 }
 
-
 export function getJoinData(socket, name) {
   const player = w.createPlayer(socket, name);
   const planets = getAllPlanetsDisplay();
-  return {player, planets};
+  const blueprints = {
+    upgrades: b.EQUIP_UPGRADES,
+    primary: b.EQUIP_PRIMARY_WEAPONS,
+    secondary: b.EQUIP_SECONDARY_WEAPONS,
+    droids: b.EQUIP_DROIDS,
+    ships: b.ALL_SHIPS}
+  return {player, planets, blueprints};
 }

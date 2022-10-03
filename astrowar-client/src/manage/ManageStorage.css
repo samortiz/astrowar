@@ -1,0 +1,46 @@
+.storage-section {
+  padding-top:10px;
+  padding-bottom:10px;
+}
+
+.title {
+  font-weight:bold;
+  padding-bottom:10px;
+}
+
+.item-list {
+  border-left:1px solid black;
+  border-top:1px solid black;
+  border-bottom:1px solid black;
+  display: inline-block;
+  vertical-align:top
+}
+
+.item {
+  padding:5px;
+}
+
+.selected-item {
+  font-weight:bold;
+  background-color: #555;
+}
+
+.non-selected-item {
+  font-weight:normal;
+}
+
+.item-details {
+  border:1px solid black;
+  display:inline-block;
+  vertical-align:top;
+}
+
+.item-attr {
+  padding:5px;
+}
+
+.equip-list {
+  border:1px solid black;
+  display: inline-block;
+  vertical-align:top
+}

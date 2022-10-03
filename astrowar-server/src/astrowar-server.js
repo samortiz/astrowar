@@ -1,8 +1,8 @@
-import * as c  from './server-constants.js'
-import * as w from './world.js'
-import * as run from './run.js'
-import * as display from './display.js'
-import * as manage from './manage.js'
+import * as c  from './s_constants.js'
+import * as w from './s_world.js'
+import * as run from './s_run.js'
+import * as display from './s_display.js'
+import * as manage from './s_manage.js'
 import express from "express"
 import cors from "cors"
 import { Server } from "socket.io"
@@ -134,6 +134,56 @@ socketIo.on("connection", (socket) => {
       }
     }
   });
+
+  socket.on("build", (blueprint) => {
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot build without player");
+      return;
+    }
+    if (player.currentShip && player.selectedPlanet) {
+      const planet = player.selectedPlanet;
+      manage.build(blueprint, planet, player)
+    }
+  });
+
+  socket.on("use-ship", (ship) => {
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot use ship without player");
+      return;
+    }
+    if (player.currentShip && player.selectedPlanet) {
+      const planet = player.selectedPlanet;
+      const newShip = w.world.ships.find(s => s.id === ship.id);
+      w.startUsingShip(player, newShip, planet);
+    }
+  });
+
+  socket.on("move-equip", (params) => {
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot use ship without player");
+      return;
+    }
+    const source = params.source;
+    const target = params.target;
+    const equip = params.equip;
+    manage.moveEquip(source, target, equip, player);
+  });
+
+
+  socket.on("select-secondary", (params) => {
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot select secondary without player");
+      return;
+    }
+    const selectedSecondaryWeaponIndex = params.selectedSecondaryWeaponIndex;
+    manage.selectSecondaryWeaponIndex(player.currentShip, selectedSecondaryWeaponIndex);
+  });
+
+
 
 });
 

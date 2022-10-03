@@ -216,3 +216,11 @@ export function showToast(text) {
     }
   }).then();
 }
+
+/**
+ * @param val as an int or default if the supplied item is null or NaN
+ * @param def default value if val is not a number
+ */
+export function getInt(val, def) {
+  return parseInt(val) || def;
+}

@@ -58,8 +58,8 @@ export default class App extends React.Component {
     });
     // After a player has joined
     window.world.system.socket.on("joined", (joinData) => {
-      window.world.currentPlayer = joinData.player;
       window.world.planets = joinData.planets;
+      window.world.blueprints = joinData.blueprints;
     });
     // Screen updates
     window.world.system.socket.on("update", newDisplayData => {

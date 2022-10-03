@@ -258,6 +258,7 @@ function getExplosionSprite(explosion) {
 }
 
 export function drawMiniMap() {
+  const selectedPlanet = window.world?.displayData?.player?.selectedPlanet;
   let g = window.world.system.miniMapGraphics;
   let view = window.world.view;
   let l = 0;
@@ -275,7 +276,7 @@ export function drawMiniMap() {
     if (planetOnMap(view, planet)) {
       let x = l + c.HALF_MINIMAP_WIDTH + ((planet.x - view.x) * c.MINIMAP_SCALE_X);
       let y = t + c.HALF_MINIMAP_HEIGHT + ((planet.y - view.y) * c.MINIMAP_SCALE_Y);
-      const planetColor = window.world.selectedPlanet === planet ? c.MINIMAP_SELECTED_PLANET_COLOR : c.PLANET_COLORS[planet.imageFile];
+      const planetColor = selectedPlanet && selectedPlanet.id === planet.id ? c.MINIMAP_SELECTED_PLANET_COLOR : c.PLANET_COLORS[planet.imageFile];
       g.lineStyle(2, planetColor);
       g.beginFill(planetColor);
       g.drawCircle(x, y, planet.radius * c.MINIMAP_SCALE_X);
