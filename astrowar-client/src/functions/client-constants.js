@@ -105,8 +105,6 @@ export const SMOKE = "smoke";
 // MiniMap colors
 export const MINIMAP_BORDER_COLOR = LIGHT_GREY;
 export const MINIMAP_BACKGROUND_COLOR = DARK_GREY;
-export const MINIMAP_BUILDING_COLOR = BLUE;
-export const MINIMAP_SHIP_COLOR = WHITE;
 export const MINIMAP_SELECTED_PLANET_COLOR = YELLOW;
 export const PLANET_COLORS = {
   [PLANET_ROCK_FILE]: GREY,
@@ -114,4 +112,11 @@ export const PLANET_COLORS = {
   [PLANET_GREEN_FILE]: GREEN,
   [PLANET_PURPLE_FILE]: PURPLE,
   [WORMHOLE_SPRITE]: DARKER_GREY,
+};
+// Amount of space on the planet sprite (in pixels)
+export const PLANET_SPRITE_GAP = {
+  [PLANET_ROCK_FILE]: 10,
+  [PLANET_RED_FILE]: 10,
+  [PLANET_GREEN_FILE]: 30,
+  [PLANET_PURPLE_FILE]: 35,
 };

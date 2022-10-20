@@ -3,24 +3,28 @@ import * as b from './s_blueprints.js';
 import * as w from './s_world.js';
 import * as utils from './s_utils.js';
 import * as run from './s_run.js';
+import * as manage from './s_manage.js';
 
 
-export function runAllShipsAi() {
-  for (let ship of w.world.ships) {
-    if (!ship.alive || !ship.aiType) {
-      continue;
-    }
-    let hasMoved = false;
-    if (ship.aiType === b.EQUIP_AI_TURRET) {
-      hasMoved = turretAi(ship, 0.7);
-    } else if (ship.aiType === b.EQUIP_AI_MISSILE) {
-      hasMoved = missileAi(ship);
-    }
-    if (hasMoved) {
-      checkForCollisionWithPlanet(ship);
-      checkForCollisionWithShip(ship);
-    }
-  } // for ship
+export function runShipAi(ship) {
+  if (!ship.alive || !ship.aiType) {
+    return;
+  }
+  let hasMoved = false;
+  if (ship.aiType === b.AI_TURRET) {
+    hasMoved = turretAi(ship, 0.7);
+  } else if (ship.aiType === b.AI_MISSILE) {
+    hasMoved = missileAi(ship);
+  } else if (ship.aiType === b.AI_KAMIKAZI) {
+    hasMoved = kamikaziAi(ship);
+  } else if (ship.aiType === b.AI_MINE) {
+    hasMoved = mineAi(ship);
+  } else if (ship.aiType === b.AI_NONE) {
+    hasMoved = noneAi(ship);
+  }
+  if (hasMoved) {
+    checkForCollisionWithShip(ship);
+  }
 }
 
 /**
@@ -37,11 +41,12 @@ export function shootAt(shooter, x, y, jitter) {
 }
 
 export function turretAi(turretShip, jitter) {
-  const {target, dist} = getNearestOpponentTarget(turretShip);
+  const {target, dist} = getNearestOpponentTarget(turretShip, true, false);
   if (!target || !target.alive) {
     return false;
   }
-  if (dist < run.primaryWeaponRange(turretShip)) {
+  // we start shooting a little early before we can actually hit something
+  if (dist < (run.primaryWeaponRange(turretShip) + 100) ) {
     console.log('shooting at ', target, ' turret=', turretShip);
     shootAt(turretShip, target.x, target.y, jitter);
   }
@@ -53,11 +58,12 @@ export function turretAi(turretShip, jitter) {
  * @currShip : the current ship to find nearby opponents for
  * returns {target:ship, dist:int }  x and y will be null if no living targets are found
  */
-export function getNearestOpponentTarget(currShip) {
+export function getNearestOpponentTarget(currShip, seeCloaked=false, seeStealth=false) {
   let target = null;
   let minDist = null;
   for (let ship of w.world.ships) {
-    if (ship.alive && ship.playerId !== currShip.playerId) {
+    const canSee = (seeCloaked || !manage.isCloaked(ship)) && (seeStealth || !manage.isStealth(ship));
+    if (ship.alive && canSee && ship.playerId !== currShip.playerId) {
       let dist = utils.distanceBetween(currShip.x, currShip.y, ship.x, ship.y);
       if (!target || (dist < minDist)) {
         target = ship;
@@ -73,11 +79,12 @@ export function getNearestOpponentTarget(currShip) {
  * @currShip : any friendly ship except the one matching currShip.id
  * returns {target:X, dist:Y }  x and y will be null if no living targets are found
  */
-export function getNearestFriendlyTarget(currShip) {
+export function getNearestFriendlyTarget(currShip, seeCloaked=false, seeStealth=false) {
   let target = null;
   let minDist = null;
   for (let ship of w.world.ships) {
-    if (ship.alive && ship.playerId === currShip.playerId && ship.id !== currShip.id) {
+    const canSee = (seeCloaked || !manage.isCloaked(ship)) && (seeStealth || !manage.isStealth(ship));
+    if (ship.alive && canSee && ship.playerId === currShip.playerId && ship.id !== currShip.id) {
       let dist = utils.distanceBetween(currShip.x, currShip.y, ship.x, ship.y);
       if (!target || (dist < minDist)) {
         target = ship;
@@ -93,23 +100,93 @@ export function getNearestFriendlyTarget(currShip) {
  */
 export function missileAi(missile) {
   if (!missile.viewRange) {
-    console.log("Missile cannot see, no view range");
+    console.warn("Missile cannot see, no view range");
     return false;
   }
-  const {target, dist} = getNearestOpponentTarget(missile);
+  const {target, dist} = getNearestOpponentTarget(missile, false, true);
   // Missiles don't track targets really far away
   if (target && dist <= missile.viewRange) {
-    let dirToTarget = utils.directionTo(missile.x, missile.y, target.x, target.y);
-    let {xAmt, yAmt} = utils.dirComponents(dirToTarget, missile.propulsion);
-    missile.vx += xAmt;
-    missile.vy += yAmt;
-    missile.x += missile.vx;
-    missile.y += missile.vy;
+    if (missile.landed) {
+      missile.landed = false;
+      run.propelShip(missile, 100);
+    } else {
+      let dirToTarget = utils.directionTo(missile.x, missile.y, target.x, target.y);
+      let {xAmt, yAmt} = utils.dirComponents(dirToTarget, missile.propulsion);
+      missile.vx += xAmt;
+      missile.vy += yAmt;
+    }
     return true;
   }
   // Don't move if there's nobody to move towards
   return false;
 }
+
+/**
+ * AI that tries to crash into the nearest enemy
+ */
+export function kamikaziAi(missile) {
+  if (!missile.viewRange) {
+    console.warn("Kamikazi cannot see, no view range");
+    return false;
+  }
+  const {target, dist} = getNearestOpponentTarget(missile, false, true);
+  if (target && dist <= missile.viewRange) {
+    if (missile.landed) {
+      missile.landed = false;
+      run.propelShip(missile, 100);
+    } else {
+      let dirToTarget = utils.directionTo(missile.x, missile.y, target.x, target.y);
+      // We are moving without momentum, so propulsion is not our acceleration but distance
+      let {xAmt, yAmt} = utils.dirComponents(dirToTarget, (missile.propulsion * 25));
+      missile.x += xAmt;
+      missile.y += yAmt;
+      if (missile.vx > 0) {
+        missile.vx = 0;
+      }
+      if (missile.vy > 0) {
+        missile.vy = 0;
+      }
+    }
+    return true;
+  }
+  // Don't move if there's nobody to move towards
+  return false;
+}
+
+/**
+ * AI that doesn't move and explodes when near enough to an enemy
+ */
+export function mineAi(mine) {
+  if (!mine.viewRange) {
+    console.log("Mine cannot see, no view range");
+    return false;
+  }
+  const {target, dist} = getNearestOpponentTarget(mine, true, false);
+  if (target && dist <= mine.viewRange) {
+    // Blow up the missile
+    run.damageShip(mine, mine.armor);
+    // Explosion crash.jpg is 128 x 128 - explosion visually is about 40px
+    const explosionScale = mine.viewRange  / 40;
+    w.createExplosion(mine.x, mine.y, explosionScale);
+    // Damage nearby ships
+    for (let ship of w.world.ships) {
+      if (ship.alive && utils.distanceBetween(mine.x, mine.y, ship.x, ship.y) < mine.viewRange) {
+        run.damageShip(ship, mine.explosionDamage);
+      }
+    }
+  }
+  // Doesn't move
+  return false;
+}
+
+/**
+ * AI that doesn't do anything
+ */
+export function noneAi(ship) {
+  // Doesn't move
+  return false;
+}
+
 
 /**
  * Determine x,y amounts needed to move around an obstacle, moving right or left from dirToTarget
@@ -211,15 +288,6 @@ export function getNearestShip(x, y, shipId, ) {
   return {target:target, dist: minDist};
 }
 
-export function checkForCollisionWithPlanet(alien) {
-  for (let planet of w.world.planets) {
-    let dist = utils.distanceBetween(alien.x, alien.y, planet.x, planet.y);
-    if (dist <= (alien.radius + planet.radius)) {
-      run.destroyShip(alien, null);
-    }
-  } // for
-}
-
 export function checkForCollisionWithShip(ship) {
   for (let otherShip of w.world.ships) {
     if (otherShip.alive && ship !== otherShip) {
@@ -249,3 +317,4 @@ export function getShield(ship) {
   } // for
   return null;
 }
+

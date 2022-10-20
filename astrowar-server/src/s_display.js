@@ -1,5 +1,6 @@
 import * as w from "./s_world.js";
 import * as b from "./s_blueprints.js";
+import * as manage from "./s_manage.js";
 
 export function getShipDisplay(ship) {
   if (ship == null) {
@@ -14,7 +15,10 @@ export function getShipDisplay(ship) {
     y: ship.y,
     rotation: ship.rotation,
     imageFile: ship.imageFile,
+    imageScale: ship.imageScale,
     radius: ship.radius,
+    cloaked : manage.isCloaked(ship),
+    stealth: manage.isStealth(ship),
   };
 }
 
@@ -44,7 +48,8 @@ export function getExplosionDisplay(explosion) {
     id: explosion.id,
     x: explosion.x,
     y: explosion.y,
-    ttl: explosion.ttl
+    ttl: explosion.ttl,
+    scale: explosion.scale,
   };
 }
 

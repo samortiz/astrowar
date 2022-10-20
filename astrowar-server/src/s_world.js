@@ -3,6 +3,7 @@ import * as c from './s_constants.js'
 import * as b from './s_blueprints.js'
 import * as server from "./astrowar-server.js";
 import * as manage from './s_manage.js'
+import * as run from './s_run.js'
 
 export const world = {
   players: [],
@@ -28,15 +29,21 @@ function createPlanets() {
 
       const generateResources = {titanium:0, gold:0, uranium:0};
       if (fileName === c.PLANET_ROCK_FILE) {
-        generateResources.titanium = 1;
-      } else if (fileName === c.PLANET_RED_FILE) {
-        generateResources.gold = 1;
-      } else if (fileName === c.PLANET_PURPLE_FILE) {
-        generateResources.uranium = 1;
-      } else if (fileName === c.PLANET_GREEN_FILE) {
         generateResources.titanium = 2;
+        generateResources.gold = 1;
+        generateResources.uranium = 1;
+      } else if (fileName === c.PLANET_RED_FILE) {
+        generateResources.titanium = 1;
         generateResources.gold = 2;
+        generateResources.uranium = 1;
+      } else if (fileName === c.PLANET_PURPLE_FILE) {
+        generateResources.titanium = 1;
+        generateResources.gold = 1;
         generateResources.uranium = 2;
+      } else if (fileName === c.PLANET_GREEN_FILE) {
+        generateResources.titanium = 1.5;
+        generateResources.gold = 1.5;
+        generateResources.uranium = 1.5;
       }
 
       // Setup the planet
@@ -107,7 +114,7 @@ export function createShip(shipBlueprint, player) {
   ship.vx = 0;
   ship.vy = 0;
   ship.rotation = 0;
-  ship.radius =  21;  // This needs to match the scale and imageSize (how to calculate on the server?)
+  ship.radius =  ship.imageRadius;
   ship.resources = {titanium: 0, gold: 0, uranium: 0};
   // Create copies of all the equip on the ship
   ship.equip = []
@@ -143,23 +150,26 @@ export function startUsingShip(player, newShip, planet) {
   const oldShip = player.currentShip;
   newShip.playerId = player.id;
   newShip.color = player.color;
-  // Remove the new ship from the planet
-  const shipIndex = planet.ships.find(s => s.id === newShip.id);
-  if (shipIndex) {
+  // Remove the new ship from the planet storage
+  const shipIndex = planet.ships.findIndex(s => s.id === newShip.id);
+  if (shipIndex >= 0) {
     planet.ships.splice(shipIndex, 1);
   } else {
     console.warn("unable to remove newShip ", newShip, " from ", planet.ships);
+    return;
   }
   // Add the old ship to the planet
   planet.ships.push(oldShip);
   oldShip.inStorage = true;
-  // Set the new ship's location
-  player.x = oldShip.x;
-  player.y = oldShip.y;
-  newShip.x = oldShip.x;
-  newShip.y = oldShip.y;
   newShip.inStorage = false;
   player.currentShip = newShip;
+
+  // Set the new ship's location
+  newShip.x = oldShip.x;
+  newShip.y = oldShip.y;
+  run.landShip(newShip, planet) // land so we end up on the surface with different ship sizes
+  player.x = newShip.x;
+  player.y = newShip.y;
 }
 
 export function createPlayer(socket, name) {
@@ -248,7 +258,7 @@ export function createBullet(x, y, vx, vy, gun, rotation) {
   return bullet;
 }
 
-export function createExplosion(x, y) {
+export function createExplosion(x, y, scale=2.0) {
   let explosion = null;
   for (let existingExplosion of world.explosions) {
     if (existingExplosion.ttl <= 0) {
@@ -264,6 +274,7 @@ export function createExplosion(x, y) {
   explosion.x = x;
   explosion.y = y;
   explosion.ttl = c.EXPLOSION_TTL_TICKS;
+  explosion.scale = scale;
 }
 
 export function generateUniqueId() {

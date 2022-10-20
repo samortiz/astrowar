@@ -7,27 +7,11 @@ import * as manage from './s_manage.js';
 import * as ai from './s_ai.js';
 import {playerKeys} from "./astrowar-server.js";
 import {world} from "./s_world.js";
+import {getNearestOpponentTarget} from "./s_ai.js";
 
 
 export function mainServerLoop() {
-  // Move bullets (reverse so we can remove dead bullets as we go)
-  for (let i=world.bullets.length-1; i>=0; i--) {
-    const bullet = world.bullets[i];
-    bullet.x = bullet.x + bullet.vx;
-    bullet.y = bullet.y + bullet.vy;
-    bullet.ttl = bullet.ttl - 1;
-    const hitObject = hitsPlanetOrShip(bullet.id, bullet.x, bullet.y, bullet.radius);
-    if (hitObject) {
-      bullet.ttl = 0;
-      if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
-        damageShip(hitObject, bullet.damage);
-      }
-    }
-    if (bullet.ttl <=0) {
-      // Remove bullet from bullets array
-      world.bullets.splice(i, 1);
-    }
-  } // for bullet
+  moveBullets();
 
   // Check for player actions
   for (let player of world.players) {
@@ -35,40 +19,7 @@ export function mainServerLoop() {
     checkForPressedKeys(player, keys);
   }
 
-  // Move ships
-  for (let ship of world.ships) {
-    if (!ship.alive || ship.inStorage) {
-      continue;
-    }
-    if (!ship.landed) {
-      // Gravity
-      const hasGravityShield = !!utils.getEquip(ship, b.EQUIP_TYPE_GRAVITY_SHIELD);
-      if (!hasGravityShield) {
-        for (let planet of world.planets) {
-          let grav = utils.calcGravity(ship.x, ship.y, planet);
-          ship.vx += grav.x;
-          ship.vy += grav.y;
-        }
-      }
-      ship.x = ship.x + ship.vx;
-      ship.y = ship.y + ship.vy;
-
-      const hitObject = hitsPlanetOrShip(ship.id, ship.x, ship.y, ship.radius);
-      if (hitObject) {
-        if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
-          const hitArmor = hitObject.armor;
-          damageShip(hitObject, ship.armor);
-          damageShip(ship, hitArmor);
-        }
-        if (hitObject.objectType === c.OBJECT_TYPE_PLANET) {
-          landShip(ship, hitObject);
-        }
-      }
-    }
-    coolEquip(ship);
-
-    ai.runAllShipsAi();
-  }
+  moveShips();
 
   // Generate planet resources
   for (const planet of world.planets) {
@@ -98,20 +49,107 @@ export function mainServerLoop() {
 
 }
 
-export function firePrimaryWeapon(ship) {
-  const gun = utils.getEquip(ship, b.EQUIP_TYPE_PRIMARY_WEAPON);
-  if (!gun || gun.cool > 0) {
+
+/**
+ * Called in main loop to move all the bullets
+ */
+export function moveBullets() {
+  // Move bullets (reverse so we can remove dead bullets as we go)
+  for (let i=world.bullets.length-1; i>=0; i--) {
+    const bullet = world.bullets[i];
+    bullet.x = bullet.x + bullet.vx;
+    bullet.y = bullet.y + bullet.vy;
+    bullet.ttl = bullet.ttl - 1;
+    const hitObject = hitsPlanetOrShip(bullet.id, bullet.x, bullet.y, bullet.radius);
+    if (hitObject) {
+      bullet.ttl = 0;
+      if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
+        damageShip(hitObject, bullet.damage);
+      }
+    }
+    if (bullet.ttl <=0) {
+      // Remove bullet from bullets array
+      world.bullets.splice(i, 1);
+    }
+  } // for bullet
+}
+
+
+/**
+ * Called in main loop to move all the ships (player and non-player)
+ */
+export function moveShips() {
+  for (let ship of world.ships) {
+    if (!ship.alive || ship.inStorage) {
+      continue;
+    }
+    if (ship.lifetime) {
+      ship.lifetime -= 1;
+      if (ship.lifetime <= 0) {
+        destroyShip(ship);
+        continue;
+      }
+    }
+    if (!ship.landed) {
+      // Gravity
+      const hasGravityShield = !!utils.getEquip(ship, b.EQUIP_TYPE_GRAVITY_SHIELD);
+      if (!hasGravityShield) {
+        for (let planet of world.planets) {
+          let grav = utils.calcGravity(ship.x, ship.y, planet);
+          ship.vx += grav.x;
+          ship.vy += grav.y;
+        }
+      }
+      ship.x = ship.x + ship.vx;
+      ship.y = ship.y + ship.vy;
+
+      const hitObject = hitsPlanetOrShip(ship.id, ship.x, ship.y, ship.radius);
+      if (hitObject) {
+        if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
+          console.log("Ship to Ship collision ", hitObject);
+          const hitArmor = hitObject.armor;
+          damageShip(hitObject, ship.armor);
+          damageShip(ship, hitArmor);
+        }
+        if (hitObject.objectType === c.OBJECT_TYPE_PLANET) {
+          landShip(ship, hitObject);
+        }
+      }
+    }
+    coolEquip(ship);
+    runDroids(ship);
+    ai.runShipAi(ship);
+  }
+}
+
+
+/**
+ * Fires the weapon from the location and direction of the ship
+ */
+export function fireWeapon(weapon, ship) {
+  if (!weapon || weapon.cool > 0) {
     return;
   }
-  gun.bulletRadius = 10; // This should match the image file size and scale
-  gun.cool = gun.coolTime;
-  const jitterAmt = gun.jitter ? (gun.jitter * Math.random() * (utils.randomBool() ? -1 : 1)) : 0;
-  const rotation = ship.rotation + jitterAmt;
-  const vx = ship.vx + gun.speed * Math.cos(rotation);
-  const vy = ship.vy + gun.speed * Math.sin(rotation);
-  const x = ship.x + ((ship.radius + gun.bulletRadius + 2) * Math.cos(rotation));
-  const y = ship.y + ((ship.radius + gun.bulletRadius + 2) * Math.sin(rotation));
-  w.createBullet(x, y, vx, vy, gun, rotation);
+
+  if (weapon && (weapon.cool <= 0)) {
+    weapon.bulletRadius = 10; // This should match the image file size and scale
+    weapon.cool = weapon.coolTime; // this is decremented in coolWeapons
+    const jitterAmt = weapon.jitter ? (weapon.jitter * Math.random() * (utils.randomBool() ? -1 : 1)) : 0;
+    const rotation = ship.rotation + jitterAmt;
+    const vx = ship.vx + weapon.speed * Math.cos(rotation);
+    const vy = ship.vy + weapon.speed * Math.sin(rotation);
+    const x = ship.x + ((ship.radius + weapon.bulletRadius + 2) * Math.cos(rotation));
+    const y = ship.y + ((ship.radius + weapon.bulletRadius + 2) * Math.sin(rotation));
+    w.createBullet(x, y, vx, vy, weapon, rotation);
+  }
+}
+
+
+export function firePrimaryWeapon(ship) {
+  const gun = utils.getEquip(ship, b.EQUIP_TYPE_PRIMARY_WEAPON);
+  if (gun) {
+    fireWeapon(gun, ship);
+  }
 }
 
 export function selectFirstSecondaryWeapon(ship) {
@@ -153,6 +191,8 @@ export function fireSecondaryWeapon(ship) {
       const child = w.createShip(weapon.createShip.type, player);
       // For a decoy we will mimic the skin of the player's ship
       if (child.name === b.SHIP_DECOY.name) {
+        child.imageScale = ship.imageScale;
+        child.imageRadius = ship.imageRadius;
         child.imageFile = ship.imageFile;
       }
       const childDistFromShip = ship.radius + child.radius + 20;
@@ -175,6 +215,12 @@ export function fireSecondaryWeapon(ship) {
       }
       enableShield(ship, weapon.shield);
     }
+    if (weapon.lifetime) {
+      weapon.lifetime.lifetime = weapon.lifetime.lifetimeMax;
+    }
+    if (weapon.jump) {
+      manage.jumpShip(ship, weapon);
+    }
     weapon.cool = weapon.coolTime; // this is decremented in coolWeapons
   }
 
@@ -190,15 +236,15 @@ function turnShip(ship, left) {
   ship.rotation = utils.normalizeRadian(ship.rotation + turnSpeed * (left ? -1 : 1));
 }
 
-export function propelShip(ship) {
+export function propelShip(ship, boost=1) {
   let propulsion = ship.propulsion;
   for (const equip of ship.equip) {
     if (equip.type === b.EQUIP_TYPE_SPEED && equip.boostSpeed) {
       propulsion += equip.boostSpeed;
     }
   }
-  ship.vx += propulsion * Math.cos(ship.rotation);
-  ship.vy += propulsion * Math.sin(ship.rotation);
+  ship.vx += propulsion * Math.cos(ship.rotation) * boost;
+  ship.vy += propulsion * Math.sin(ship.rotation) * boost;
 }
 
 export function brakeShip(ship) {
@@ -328,12 +374,14 @@ export function destroyShip(ship) {
   w.createExplosion(ship.x, ship.y);
   ship.alive = false;
   ship.landed = false; // you're no longer on the planet
+  ship.inStorage = false;
   const player = world.players.find(p => p.id === ship.playerId);
   if (player) {
     player.deathCount += 1;
-    player.selectedPlanet = null;
+    if (ship.id === player.currentShip.id) {
+      player.selectedPlanet = null;
+    }
   }
-  console.log('ship died for player ', player);
 }
 
 /**
@@ -351,7 +399,7 @@ export function shipsCollide(ship, other) {
 
 export function damageShip(ship, damage) {
   ship.armor = ship.armor - damage;
-  console.log('hit ', ship);
+  console.log('damage=', damage, ship);
   if (ship.armor <= 0) {
     ship.armor = 0;
     destroyShip(ship);
@@ -363,8 +411,7 @@ export function damageShip(ship, damage) {
 /**
  * Land the ship on the planet
  */
-function landShip(ship, planet) {
-  console.log('ship landed on planet ', planet, ' ship=', ship);
+export function landShip(ship, planet) {
   //Set ship position and angle on the planet surface
   let dir = utils.directionTo(planet.x, planet.y, ship.x, ship.y)
   let r = planet.radius + ship.radius;
@@ -376,11 +423,17 @@ function landShip(ship, planet) {
   ship.vy = 0;
   ship.landed = true;
   const player = world.players.find(p => p.id === ship.playerId);
-  player.selectedPlanet = planet; // currently selected planet (for manage UI)
+  if (player) {
+    // If a player is using this ship, then this is the selected planet
+    if (player.currentShip.id === ship.id) {
+      player.selectedPlanet = planet; // currently selected planet (for manage UI)
+    }
+  } else {
+    console.log('landed ', ship);
+  }
 }
 
 function takeOff(player) {
-  console.log('takeoff ', player);
   player.currentShip.landed = false;
   // This will give a little boost for takeoff (a double propulsion)
   propelShip(player.currentShip);
@@ -431,6 +484,10 @@ export function coolEquip(ship) {
     if (equip.cool) {
       equip.cool -= 1;
     }
+    // Cloaks have a lifetime (how long they last) in addition to a cool (how often they shoot)
+    if (equip.lifetime && equip.lifetime.lifetime) {
+      equip.lifetime.lifetime -= 1;
+    }
     // Gunnery Droids are equip with weapons
     if (equip.weapon && equip.weapon.cool) {
       equip.weapon.cool -= 1;
@@ -453,7 +510,7 @@ export function weaponRange(weapon) {
     return 0;
   }
   // Not sure what the fudge factor is, but the range seems a little short without it
-  return weapon.speed * weapon.lifetime * 1.4;
+  return weapon.speed * weapon.lifetime * 1.1;
 }
 
 /**
@@ -462,4 +519,37 @@ export function weaponRange(weapon) {
 export function primaryWeaponRange(ship) {
   let gun = utils.getEquip(ship, b.EQUIP_TYPE_PRIMARY_WEAPON);
   return weaponRange(gun);
+}
+
+export function runDroids(ship) {
+  for (let droid of ship.equip) {
+    if ((droid.type === b.EQUIP_TYPE_REPAIR_DROID) && (ship.armor < ship.armorMax)) {
+      let cost = {titanium: 0, gold: 0, uranium: 0};
+      if (manage.canAfford(null, ship, cost)) {
+        ship.armor += droid.repairSpeed;
+        manage.payResourceCost(null, ship, cost);
+      }
+    } else if (droid.type === b.EQUIP_TYPE_GUNNERY_DROID) {
+      shootNearestEnemy(ship, droid.weapon);
+    }
+    // NOTE: Shield droid runs in checkForBulletCollision
+  } // for
+}
+
+
+/**
+ * Fires the weapon in the direction of the nearest alien (if able to)
+ */
+export function shootNearestEnemy(ship, weapon) {
+  // If we can't shoot, don't waste our time
+  if (weapon.cool > 0) {
+    return;
+  }
+  const {target, dist} = ai.getNearestOpponentTarget(ship, true, false);
+  if (target && (dist <= weaponRange(weapon))) {
+    const origDir = ship.rotation;
+    ship.rotation = utils.normalizeRadian(Math.atan2(target.y - ship.y, target.x - ship.x));
+    fireWeapon(weapon, ship);
+    ship.rotation = origDir;
+  }
 }

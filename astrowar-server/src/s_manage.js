@@ -3,6 +3,7 @@ import * as c from './s_constants.js'
 import * as w from './s_world.js'
 import * as utils from './s_utils.js'
 import {arrayRemoveItemOnce} from "./s_utils.js";
+import {EQUIP_TYPE_CLOAK, EQUIP_TYPE_SECONDARY_WEAPON} from "./s_blueprints.js";
 
 /**
  * Move a resource ship <-> planet
@@ -242,4 +243,40 @@ export function removeEquip(ship, equip) {
       ship.armor = ship.armorMax;
     }
   }
+}
+
+/**
+ * @return true if the ship is currently cloaked
+ */
+export function isCloaked(ship) {
+  const equipCloak = ship.equip.find(e => e.type === b.EQUIP_TYPE_SECONDARY_WEAPON && e.cloak);
+  if (!equipCloak || !equipCloak.lifetime) {
+    return false;
+  }
+  return equipCloak.lifetime.lifetime > 0;
+}
+
+/**
+ * @return true if the ship is hidden by a stealth skin
+ */
+export function isStealth(ship) {
+  const equipStealth = ship.equip.find(e => e.type === b.EQUIP_TYPE_SECONDARY_WEAPON && e.stealth);
+  if (!equipStealth || !equipStealth.lifetime) {
+    return false;
+  }
+  return equipStealth.lifetime.lifetime > 0;
+}
+
+/**
+ * Jumps the ship to a nearby location
+ */
+export function jumpShip(ship, jumpEquip) {
+  if (!ship || !jumpEquip || !jumpEquip.jump) {
+    console.log("Unable to jump without ship and jump ", jumpEquip, ship);
+    return;
+  }
+  const jump = jumpEquip.jump;
+  let {x, y} = utils.getPointFrom(ship.x, ship.y, ship.rotation, jump.distance);
+  ship.x = x;
+  ship.y = y;
 }

@@ -57,8 +57,7 @@ export const UNIVERSE_RINGS = [
     minDist: 1500, maxDist: 12000,
     minDistToOtherPlanet: 200,
     minPlanetRadius: 150, maxPlanetRadius: 500,
-    // planetFiles: [PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
-    planetFiles: [PLANET_GREEN_FILE],
+    planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
   },
 
 ];
