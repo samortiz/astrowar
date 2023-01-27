@@ -31,7 +31,7 @@ export function createEmptyWorld() {
       smokeSheet: null, // spritesheet for smoke animation
       explosionSheet: null, // spritesheet for explosions
       planetSprites: {}, // {"123" : sprite }
-      shipSpriteCache: {}, //  {"explorer.png" : [{ id:242|null, sprite:obj }]}
+      shipSpriteCache: {}, //  {"explorer.png" : [{ id:242|null, sprite:obj, shieldSprites: {"shield_white.png" : spriteObj ... } }]}
       bulletSpriteCache: {}, //  {"bullet.png" : [{ id:242|null, sprite:obj }]}
       explosionSpriteDataList: [], //  [{ id:242|null, x:123, y:123, sprite:obj }]
       spriteContainers: {background: null, planets: null, bullets: null, ships: null, minimap: null, explosions:null},

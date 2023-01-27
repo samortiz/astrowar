@@ -39,7 +39,6 @@ export const EQUIP_TYPE_SHIELD_DROID = "Shield Droid";
 export const EQUIP_TYPE_SPEED = "Speed";
 export const EQUIP_TYPE_TURN = "Turn";
 export const EQUIP_TYPE_GRAVITY_SHIELD = "GravityShield";
-export const EQUIP_TYPE_CLOAK = "Cloak";
 
 export const THRUST_MOMENTUM = "Thrust Momentum";
 export const THRUST_BLINK = "Thrust Blink";
@@ -49,7 +48,7 @@ export const AI_MINE = "MINE";
 export const AI_CREEPER = "AI_CREEPER";
 export const AI_TURRET = "AI_TURRET";
 export const AI_MISSILE = "AI_MISSILE";
-export const AI_KAMIKAZI = "AI_KAMIKAZI";
+export const AI_MISSILE_NO_MOMENTUM = "AI_MISSILE_NO_MOMENTUM";
 
 export const DIR_AHEAD_OF_SHIP = "ahead";
 export const DIR_BEHIND_SHIP = "behind";
@@ -57,7 +56,7 @@ export const DIR_BEHIND_SHIP = "behind";
 // Ship Upgrades
 // brakeSpeedPct is best between 0.02 - 0.1 (higher is ok)
 export const EQUIP_BRAKE = {
-  name: "Brake", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_BRAKE, brakeSpeedPct: 0.15,
+  name: "Brake", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_BRAKE, brakeSpeedPct: 0.25,
   cost: {titanium: 20, gold: 10, uranium: 0},
   description: "Slows your ship down.",
 };
@@ -317,7 +316,7 @@ export const EQUIP_SHIELD_BLINK = {
 export const SHIP_RED_MISSILE = {
   name: "Alien Missile",
   objectType: c.OBJECT_TYPE_SHIP,
-  propulsion: 0.1,
+  propulsion: 0.2,
   turnSpeed: 0.3,
   resourcesMax: 0,
   resources: {
@@ -337,7 +336,8 @@ export const SHIP_RED_MISSILE = {
   cost: {titanium: 5, gold: 5, uranium: 10},
   viewRange: 3000,
   lifetime: 400,
-  aiType: AI_KAMIKAZI,
+  explosionDamage: 100,
+  aiType: AI_MISSILE_NO_MOMENTUM,
 };
 
 export const EQUIP_ALIEN_MISSILE_LAUNCHER = {
@@ -382,7 +382,7 @@ export const SHIP_EXPLORER = {
     uranium: 0,
   },
   equipMax: 4,
-  equip: [EQUIP_BRAKE, EQUIP_BLASTER],
+  equip: [EQUIP_BLASTER],
   armorMax: 50,
   armor: 50,
   crashSpeed: 2,
@@ -406,7 +406,7 @@ export const SHIP_FAST = {
     uranium: 0,
   },
   equipMax: 5,
-  equip: [EQUIP_BRAKE],
+  equip: [],
   armorMax: 50,
   armor: 50,
   crashSpeed: 2,
@@ -430,7 +430,7 @@ export const SHIP_HEAVY = {
     uranium: 0,
   },
   equipMax: 8,
-  equip: [EQUIP_BRAKE],
+  equip: [],
   armorMax: 500,
   armor: 500,
   crashSpeed: 1.5,
@@ -454,7 +454,7 @@ export const SHIP_FIGHTER = {
     uranium: 0,
   },
   equipMax: 10,
-  equip: [EQUIP_BRAKE],
+  equip: [],
   armorMax: 300,
   armor: 300,
   crashSpeed: 1.5,
@@ -478,7 +478,7 @@ export const SHIP_WING = {
     uranium: 0,
   },
   equipMax: 12,
-  equip: [EQUIP_BLINK_BRAKE],
+  equip: [],
   armorMax: 500,
   armor: 500,
   crashSpeed: 3,
@@ -502,7 +502,7 @@ export const SHIP_ALIEN_STEALTH = {
     uranium: 0,
   },
   equipMax: 6,
-  equip: [EQUIP_BRAKE, EQUIP_ALIEN_BLASTER_FAST],
+  equip: [],
   armorMax: 150,
   armor: 150,
   crashSpeed: 2,
@@ -595,7 +595,7 @@ export const SHIP_STREAM_TURRET = {
 export const SHIP_MISSILE = {
   name: "Missile",
   objectType: c.OBJECT_TYPE_SHIP,
-  propulsion: 0.15,
+  propulsion: 0.3,
   turnSpeed: 0.5,
   resourcesMax: 0,
   resources: {
@@ -605,8 +605,8 @@ export const SHIP_MISSILE = {
   },
   equipMax: 0,
   equip: [],
-  armorMax: 100,
-  armor: 100,
+  armorMax: 150,
+  armor: 150,
   crashSpeed: 2,
   crashAngle: 10,
   imageScale: 1.0,
@@ -615,6 +615,7 @@ export const SHIP_MISSILE = {
   cost: {titanium: 0, gold: 15, uranium: 15},
   viewRange: 3000,
   lifetime: 400,
+  explosionDamage: 100,
   aiType: AI_MISSILE,
   description: "An enemy seeking missile.",
 };

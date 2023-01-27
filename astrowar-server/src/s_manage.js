@@ -2,8 +2,8 @@ import * as b from './s_blueprints.js'
 import * as c from './s_constants.js'
 import * as w from './s_world.js'
 import * as utils from './s_utils.js'
-import {arrayRemoveItemOnce} from "./s_utils.js";
-import {EQUIP_TYPE_CLOAK, EQUIP_TYPE_SECONDARY_WEAPON} from "./s_blueprints.js";
+import * as run from './s_run.js'
+
 
 /**
  * Move a resource ship <-> planet
@@ -202,7 +202,7 @@ export function moveEquip(sourceP, targetP, equipP, player) {
   // Add equip to the target
   target.equip.push(equip)
   // Remove equip from the source
-  arrayRemoveItemOnce(source.equip, equip)
+  utils.arrayRemoveItemOnce(source.equip, equip)
 
   if (target.objectType === c.OBJECT_TYPE_SHIP) {
     addEquip(target, equip);
@@ -243,7 +243,108 @@ export function removeEquip(ship, equip) {
       ship.armor = ship.armorMax;
     }
   }
+  // We need to call disable to restore the ship radius (cool will still apply)
+  if (equip.shield) {
+    run.disableShield(ship, equip.shield);
+  }
+  // If we removed any equipment, we need to reset the secondaryWeaponIndex as all the items may have shifted
+  ship.selectedSecondaryWeaponIndex = -1;
 }
+
+/**
+ * Removes a piece of random equipment and drops it on a nearby planet
+ */
+export function dropRandomEquip(ship) {
+  if (!ship || !ship.equip || ship.equip.length === 0) {
+    return;
+  }
+  const equipIndex = utils.randomInt(0, ship.equip.length-1);
+  const equip = ship.equip[equipIndex];
+  ship.equip.splice(equipIndex, 1);
+  removeEquip(ship, equip); // remove from ship
+  // Drop equip on planet
+  const nearestPlanets = findNearestPlanets(ship.x, ship.y, 3);
+  const nearestPlanet = nearestPlanets[utils.randomInt(0, nearestPlanets.length-1)].planet;
+  nearestPlanet.equip.push(equip);
+}
+
+/**
+ * Finds the nearest X planets and their distances
+ * @return [{planet:planetObj, dist:123}, {...}...]
+ */
+export function findNearestPlanets(x, y, planetCount) {
+  const retVal = [];
+  for (let planet of w.world.planets) {
+    const dist = utils.distanceBetween(x, y, planet.x, planet.y);
+    // Get the farthest planet found so far
+    let maxIndex = -1;
+    let maxDist = -1;
+    for (let i=0; i<retVal.length; i++) {
+      const val = retVal[i];
+      if (val.dist > maxDist) {
+        maxDist = val.dist;
+        maxIndex = i;
+      }
+    } // for i
+    if (maxDist === -1 || maxDist > dist) {
+      const val = {planet:planet, dist:dist};
+      if (retVal.length < planetCount) {
+        // Add the val to the list of planets we've found
+        retVal.push(val);
+      } else {
+        // Replace the farthest planet with this one
+        retVal.splice(maxIndex, 1, val);
+      }
+    }
+  } // for planet
+  retVal.sort((a,b) => a.dist - b.dist);
+  return retVal;
+}
+
+/**
+ * This will scatter all the resources and equip from a ship onto some nearby planets
+ * This should be called when a ship is about to die
+ */
+export function scatterResourcesAndEquip(ship) {
+  const nearbyPlanetData = findNearestPlanets(ship.x, ship.y, 5);
+  // Scatter resources
+  setNearbyPercents(nearbyPlanetData);
+  for (const planetData of nearbyPlanetData) {
+    transferResource(ship.resources, planetData.planet.resources, 'titanium', planetData.resourcePct * ship.resources.titanium);
+    transferResource(ship.resources, planetData.planet.resources, 'gold', planetData.resourcePct * ship.resources.gold);
+    transferResource(ship.resources, planetData.planet.resources, 'uranium', planetData.resourcePct * ship.resources.uranium);
+  }
+  // Scatter Equip
+  for (const equip of ship.equip) {
+    const planet = nearbyPlanetData[utils.randomInt(0, nearbyPlanetData.length-1)].planet;
+    planet.equip.push(equip);
+  }
+  ship.equip = [];
+}
+
+/**
+ * This will modify nearbyPlanetData and add a percent for the amount each planet should get.
+ * The percent will be such that closer planets get a higher percent, so a planet twice as far will get half the percent.
+ * * @return [{planet:planetObj, dist:123, resourcePct:0.4}, {...}...]
+ */
+function setNearbyPercents(nearbyPlanetData) {
+  const nearestDist = nearbyPlanetData[0].dist;
+  let partialSum = 1;
+  for (const planetData of nearbyPlanetData) {
+    planetData.part = planetData.dist / nearestDist;
+    partialSum = partialSum * planetData.part;
+  }
+  let sum = 0;
+  for (const planetData of nearbyPlanetData) {
+    sum += (partialSum  / planetData.part);
+  }
+  const x = partialSum / sum;
+  for (const planetData of nearbyPlanetData) {
+    planetData.resourcePct = x / planetData.part;
+    delete planetData.part; // cleanup
+  }
+}
+
 
 /**
  * @return true if the ship is currently cloaked

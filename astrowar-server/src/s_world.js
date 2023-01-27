@@ -4,6 +4,8 @@ import * as b from './s_blueprints.js'
 import * as server from "./astrowar-server.js";
 import * as manage from './s_manage.js'
 import * as run from './s_run.js'
+import {fireSecondaryWeapon} from "./s_run.js";
+import {selectSecondaryWeaponIndex} from "./s_manage.js";
 
 export const world = {
   players: [],
@@ -137,9 +139,33 @@ export function setupNewShipForPlayer(player) {
   player.x = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
   player.y = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
   const ship = createShip(b.SHIP_EXPLORER, player);
+  setupTempStartupItems(ship);
   world.ships.push(ship);
   player.currentShip = ship;
   player.alive = true;
+}
+
+/**
+ * This will add some temporary items to help a new player survive the first minute
+ */
+export function setupTempStartupItems(ship) {
+  // A jump to help the player get out of range of aggressive enemies
+  const jump = manage.makeEquip(b.EQUIP_JUMP);
+  jump.self_destruct_lifetime = 500;
+  ship.equip.push(jump);
+
+  // Scanner cloak will keep the player alive for a while
+  const cloak = manage.makeEquip(b.EQUIP_CLOAK);
+  cloak.self_destruct_lifetime = 500;
+  ship.equip.push(cloak);
+  const cloakIndex = ship.equip.findIndex(e => e.id === cloak.id);
+  selectSecondaryWeaponIndex(ship, cloakIndex);
+  fireSecondaryWeapon(ship);
+  cloak.lifetime.lifetime = 500; // give the user enough time to get away from enemies!
+
+  // Select the jump
+  const jumpIndex = ship.equip.findIndex(e => e.id === jump.id);
+  selectSecondaryWeaponIndex(ship, jumpIndex);
 }
 
 export function startUsingShip(player, newShip, planet) {
@@ -280,4 +306,16 @@ export function createExplosion(x, y, scale=2.0) {
 export function generateUniqueId() {
   world.maxId = world.maxId + 1;
   return world.maxId;
+}
+
+/**
+ * @returns true if this ship is the current ship for any player
+ */
+export function isPlayerShip(ship) {
+  for (const player of world.players) {
+    if (player.currentShip.id === ship.id) {
+      return true;
+    }
+  }
+  return false;
 }

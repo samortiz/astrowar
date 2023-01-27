@@ -1,4 +1,4 @@
-import {c, game, manage, utils} from './';
+import {c, game} from './';
 import {generateUniqueId} from "./game";
 
 // Main play mode - flying
@@ -47,10 +47,11 @@ function drawAllShips(ships) {
     sprite.position.set(x, y);
     sprite.rotation = ship.rotation;
     sprite.visible = !ship.stealth;
+    drawShieldForShip(ship);
   }
   // Check for sprites with no ship (ship died on server) - need to set visible to false
   const shipIds = ships.map(ship => ship.id);
-  for (let [imageFile, spriteDataList] of Object.entries(window.world.system.shipSpriteCache)) {
+  for (let spriteDataList of Object.values(window.world.system.shipSpriteCache)) {
     const deadShipDataList = spriteDataList.filter(data => data.shipId != null && !shipIds.includes(data.shipId));
     for (const deadShipData of deadShipDataList) {
       console.log('marked ship as dead ', deadShipData.shipId);
@@ -60,17 +61,29 @@ function drawAllShips(ships) {
   }
 }
 
+
 /**
- * Finds or creates a sprite for the ship
- * if no free sprite is found, then a free one will be looked up, failing that new one will be created
+ *  Finds the cached data for this ship (sprite, shieldSprites) in system.shipSpriteCache
+ *  Returns the cache entry for ths ship or null if none found.
  */
-function getShipSprite(ship) {
+function getShipSpriteDataList(ship) {
   let shipSpriteDataList = window.world.system.shipSpriteCache[ship.imageFile];
   // No list of sprites for this kind of ship yet - make a new list
   if (!shipSpriteDataList) {
-    shipSpriteDataList = [];
+    shipSpriteDataList = [];  // new entry for the cache
     window.world.system.shipSpriteCache[ship.imageFile] = shipSpriteDataList;
   }
+  return shipSpriteDataList;
+}
+
+
+/**
+ * Finds or creates a sprite for the ship
+ * if no free sprite is found, then a free one will be looked up, failing that new one will be created
+ * NOTE: After calling this shipSpriteCache is guaranteed to have an entry for this ship (where the sprite is held)
+ */
+function getShipSprite(ship) {
+  const shipSpriteDataList = getShipSpriteDataList(ship);
   let spriteData = shipSpriteDataList.find(data => data.shipId === ship.id);
   if (spriteData) {
     return spriteData.sprite;
@@ -93,8 +106,70 @@ function getShipSprite(ship) {
   sprite.position.set(100, 100); // will be changed later
   sprite.scale.set(ship.imageScale, ship.imageScale);
   window.world.system.spriteContainers.ships.addChild(sprite);
-  shipSpriteDataList.push({shipId:ship.id, sprite:sprite });
+  shipSpriteDataList.push({shipId:ship.id, sprite:sprite, shieldSprites: {}});
   return sprite;
+}
+
+
+/**
+ * Draws the active shield for this ship, or hides the sprite if none visible
+ */
+function drawShieldForShip(ship) {
+  if (!ship) {
+    return;
+  }
+  const shipSprite = getShipSprite(ship);
+  const shipSpriteDataList = getShipSpriteDataList(ship);
+  let spriteData = shipSpriteDataList.find(data => data.shipId === ship.id);
+  if (!spriteData) {
+    console.warn("Unable to get spriteData... the caching of ship sprites has an error!");
+  }
+  // Set all shield sprites not visible (We need to do this in case the ship is a re-used old ship with a shield)
+  for (const sprite of Object.values(spriteData.shieldSprites)) {
+      sprite.visible = false;
+  }
+  if (!ship.shield || !ship.shield.active) {
+    return;
+  }
+
+  // Set the currently active shield to visible
+  let shieldSprite = spriteData.shieldSprites[ship.shield.spriteFile];
+  if (shieldSprite) {
+    shieldSprite.visible = true;
+    return;
+  }
+
+  // We couldn't find the shield in the map of shields for this ship, we'll make a new shield
+  let spriteSheet = window.PIXI.loader.resources[c.SPRITESHEET_JSON];
+  shieldSprite = new window.PIXI.Sprite(spriteSheet.textures[ship.shield.spriteFile]);
+  shieldSprite.anchor.set(0.5, 0.5);  // pivot on ship center
+  shieldSprite.visible = true;
+  spriteData.shieldSprites[ship.shield.spriteFile] = shieldSprite;  // cache the sprite so we can hide it later
+  // The ship sprite is scaled by ship.imageScale and the shield is added as a child of the shipSprite
+  const scale = ((ship.radius * 2) / 150) / ship.imageScale;  // Shield sprites are 150x150
+  shieldSprite.scale.set(scale, scale);
+  shipSprite.addChild(shieldSprite);
+}
+
+
+/**
+ * @return the first active shield equip in the ship, and if none are active, returns the first shield it finds.
+ * returns an equip (not equip.shield like getActiveShield)
+ */
+export function getEquippedShield(ship) {
+  if (!ship || !ship.equip) {
+    return null;
+  }
+  let shield = null;
+  for (const equip of ship.equip) {
+    if (equip.shield) {
+      shield = equip;
+      if (equip.shield.active) {
+        return shield;
+      }
+    }
+  } // for equip
+  return shield;
 }
 
 
@@ -136,7 +211,7 @@ function drawAllBullets(bullets) {
   }
   // Check for sprites with no bullet (died on server) - need to set visible to false
   const bulletIds = bullets.map(bullet => bullet.id);
-  for (let [imageFile, dataList] of Object.entries(window.world.system.bulletSpriteCache)) {
+  for (let dataList of Object.values(window.world.system.bulletSpriteCache)) {
     const deadBulletDataList = dataList.filter(data => data.bulletId != null && !bulletIds.includes(data.bulletId));
     for (const deadBulletData of deadBulletDataList) {
       deadBulletData.bulletId = null;

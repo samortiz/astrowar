@@ -1,6 +1,7 @@
 import * as w from "./s_world.js";
 import * as b from "./s_blueprints.js";
 import * as manage from "./s_manage.js";
+import * as run from "./s_run.js";
 
 export function getShipDisplay(ship) {
   if (ship == null) {
@@ -19,6 +20,7 @@ export function getShipDisplay(ship) {
     radius: ship.radius,
     cloaked : manage.isCloaked(ship),
     stealth: manage.isStealth(ship),
+    shield: run.getActiveShield(ship),
   };
 }
 

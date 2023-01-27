@@ -7,7 +7,7 @@ import * as manage from './s_manage.js';
 import * as ai from './s_ai.js';
 import {playerKeys} from "./astrowar-server.js";
 import {world} from "./s_world.js";
-import {getNearestOpponentTarget} from "./s_ai.js";
+import {removeEquip} from "./s_manage.js";
 
 
 export function mainServerLoop() {
@@ -20,6 +20,8 @@ export function mainServerLoop() {
   }
 
   moveShips();
+
+  coolAllEquip(); // on ships and planets
 
   // Generate planet resources
   for (const planet of world.planets) {
@@ -49,7 +51,6 @@ export function mainServerLoop() {
 
 }
 
-
 /**
  * Called in main loop to move all the bullets
  */
@@ -73,7 +74,6 @@ export function moveBullets() {
     }
   } // for bullet
 }
-
 
 /**
  * Called in main loop to move all the ships (player and non-player)
@@ -106,22 +106,17 @@ export function moveShips() {
       const hitObject = hitsPlanetOrShip(ship.id, ship.x, ship.y, ship.radius);
       if (hitObject) {
         if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
-          console.log("Ship to Ship collision ", hitObject);
-          const hitArmor = hitObject.armor;
-          damageShip(hitObject, ship.armor);
-          damageShip(ship, hitArmor);
+          shipsCollide(ship, hitObject);
         }
         if (hitObject.objectType === c.OBJECT_TYPE_PLANET) {
           landShip(ship, hitObject);
         }
       }
     }
-    coolEquip(ship);
     runDroids(ship);
     ai.runShipAi(ship);
   }
 }
-
 
 /**
  * Fires the weapon from the location and direction of the ship
@@ -170,7 +165,7 @@ export function getSecondaryWeapon(ship) {
   }
   // Find the equipped weapon
   let equip = ship.equip[ship.selectedSecondaryWeaponIndex];
-  if (equip.type !== b.EQUIP_TYPE_SECONDARY_WEAPON) {
+  if (equip?.type !== b.EQUIP_TYPE_SECONDARY_WEAPON) {
     selectFirstSecondaryWeapon(ship);
     equip = ship.equip[ship.selectedSecondaryWeaponIndex];
   }
@@ -258,6 +253,10 @@ export function brakeShip(ship) {
       ship.vx = 0;
       ship.vy = 0;
     }
+  } else {
+    // No break installed - we'll still slow down
+    ship.vx -= ship.vx * 0.06;
+    ship.vy -= ship.vy * 0.06;
   }
 }
 
@@ -371,6 +370,7 @@ export function hitsPlanetOrShip(id, x,y, radius) {
 }
 
 export function destroyShip(ship) {
+  manage.scatterResourcesAndEquip(ship);
   w.createExplosion(ship.x, ship.y);
   ship.alive = false;
   ship.landed = false; // you're no longer on the planet
@@ -387,24 +387,100 @@ export function destroyShip(ship) {
 /**
  * collision between two ships
  */
-export function shipsCollide(ship, other) {
-  if (ship === other) {
+export function shipsCollide(shipA, shipB) {
+  if (shipA === shipB) {
     return; // can't collide with yourself
   }
-  let shipDamage = ship.armor;
-  let otherDamage = other.armor;
-  damageShip(other, shipDamage);
-  damageShip(ship, otherDamage);
+
+  // Bounce (credits to Blindman67 on stackoverflow.com)
+  const mA = shipA.armor; // mass
+  const mB = shipB.armor; // mass
+  const mm = mA + mB;
+  const x = shipA.x - shipB.x; // vector between balls
+  const y = shipA.y - shipB.y;
+  const e1 = 1; // restitution
+  const e2 = 1;
+  const d = x * x + y * y;
+  const uAB = (shipA.vx * x + shipA.vy * y) / d;  // normal component force A into B
+  const u2  = (shipA.vy * x - shipA.vx * y) / d;  // tangent component force A
+  const uBA = (shipB.vx * x + shipB.vy * y) / d;  // normal component force B into A
+  const u4  = (shipB.vy * x - shipB.vx * y) / d;  // tangent component force B
+  // Force from B into A along normal, scaled for mass ratio and restitution
+  const uA = ((mA - mB) / mm * uAB + (2 * mB) / mm * uBA) * e1;
+  // Force from A into B along normal, scaled for mass ratio and restitution
+  const uB = ((mB - mA) / mm * uBA + (2 * mA) / mm * uAB) * e2;
+
+  // Move the ships until they are no longer colliding
+  const minDist = shipA.radius + shipB.radius + 2;
+
+  // New Speed and Direction
+  if (!shipA.landed && !shipA.explosionDamage) {
+    shipA.vx = x * uA - y * u2;
+    shipA.vy = y * uA + x * u2;
+    shipA.rotation = utils.directionTo(shipA.x, shipA.y, shipA.x + shipA.vx, shipA.y + shipA.vy);
+    shipA.x += minDist * Math.cos(shipA.rotation);
+    shipA.y += minDist * Math.sin(shipA.rotation);
+  }
+  if (!shipB.landed && !shipB.explosionDamage) {
+    shipB.vx = x * uB - y * u4;
+    shipB.vy = y * uB + x * u4;
+    shipB.rotation = utils.directionTo(shipB.x, shipB.y, shipB.x + shipB.vx, shipB.y + shipB.vy);
+    shipB.x += minDist * Math.cos(shipB.rotation);
+    shipB.y += minDist * Math.sin(shipB.rotation);
+  }
+
+  // Do damage
+  damageShip(shipA, mB * 0.1); // 10% of mass damage
+  damageShip(shipB, mA * 0.1);
+
+  // Disable shields
+  const shieldA = getActiveShield(shipA);
+  if (shieldA) {
+    disableShield(shipA);
+  }
+  const shieldB = getActiveShield(shipB);
+  if (shieldB) {
+    disableShield(shipB);
+  }
+
+  // Equipment loss (to make it less desirable to crash) (only for player - player collisions)
+  // If npc hits a player or npc to npc we won't do equip drops (otherwise missiles are too potent!)
+  if (w.isPlayerShip(shipA) && w.isPlayerShip(shipB)) {
+    manage.dropRandomEquip(shipA);
+    manage.dropRandomEquip(shipB);
+  }
+
+  // ExplosionDamage (missiles and mines) (do this at the end because the ship gets destroyed)
+  if (shipA.explosionDamage) {
+    damageShip(shipB, shipA.explosionDamage);
+    destroyShip(shipA);
+  }
+  if (shipB.explosionDamage) {
+    damageShip(shipA, shipB.explosionDamage);
+    destroyShip(shipB);
+  }
 }
 
-export function damageShip(ship, damage) {
-  ship.armor = ship.armor - damage;
-  console.log('damage=', damage, ship);
-  if (ship.armor <= 0) {
-    ship.armor = 0;
-    destroyShip(ship);
-    ship.vx = 0;
-    ship.vy = 0;
+export function damageShip(ship, damage, useShield=true) {
+  if (!ship || damage <= 0) {
+    return;
+  }
+  const shield = getActiveShield(ship);
+  if (useShield && shield) {
+    shield.armor -= damage;
+    if (shield.armor <= 0) {
+      shield.armor = 0;
+      disableShield(ship, shield);
+    }
+  } else { // no shield (or damage type ignores shields)
+    ship.armor = ship.armor - damage;
+    console.log('damage=', damage, ship);
+    if (ship.armor <= 0) {
+      ship.armor = 0;
+      destroyShip(ship);
+      ship.vx = 0;
+      ship.vy = 0;
+    }
   }
 }
 
@@ -455,6 +531,7 @@ export function getActiveShield(ship) {
 /**
  * Called to enable a ship's shield.
  * This will add a shield sprite to the ship and set it to visible
+ * NOTE: This will change the ship radius
  */
 export function enableShield(ship, shield) {
   if (getActiveShield(ship) !== null) {
@@ -464,42 +541,85 @@ export function enableShield(ship, shield) {
   shield.active = true;
   shield.lifetime = shield.lifetimeMax;
   shield.armor = shield.armorMax;
-  // Possible ship size should change when shield is enabled
+  ship.radius = ship.radius * 1.5;
 }
 
 /**
  * Called to disable, and stop drawing a shield on a ship
+ * NOTE: this will change the ship radius
  */
 export function disableShield(ship, shield) {
+  if (!ship || !shield) {
+    return;
+  }
   shield.active = false;
-  // Possibly the ship size should change when shield is disabled
+  ship.radius = ship.radius / 1.5;
 }
 
 /**
- * called in flyLoop to cool all equipment (weapons mostly)
+ * Cools the particular piece of equipment (this is run from coolAllEquip, you probably shouldn't call it)
  */
-export function coolEquip(ship) {
-  for (let equip of ship.equip) {
-    // If equip has a cool time
-    if (equip.cool) {
-      equip.cool -= 1;
-    }
-    // Cloaks have a lifetime (how long they last) in addition to a cool (how often they shoot)
-    if (equip.lifetime && equip.lifetime.lifetime) {
-      equip.lifetime.lifetime -= 1;
-    }
-    // Gunnery Droids are equip with weapons
-    if (equip.weapon && equip.weapon.cool) {
-      equip.weapon.cool -= 1;
-    }
-    if (equip.shield && equip.shield.active) {
-      equip.shield.lifetime -= 1;
-      if (equip.shield.lifetime <= 0) {
-        equip.shield.lifetime = 0;
-        disableShield(ship, equip.shield);
+export function coolEquip(source, equip) {
+  if (!equip) {
+    return;
+  }
+  // If equip has a cool time
+  if (equip.cool) {
+    equip.cool -= 1;
+  }
+  // Cloaks have a lifetime (how long they last) in addition to a cool (how often they shoot)
+  if (equip.lifetime && equip.lifetime.lifetime) {
+    equip.lifetime.lifetime -= 1;
+  }
+  // Gunnery Droids are equip with weapons
+  if (equip.weapon && equip.weapon.cool) {
+    equip.weapon.cool -= 1;
+  }
+  if (equip.shield && equip.shield.active) {
+    equip.shield.lifetime -= 1;
+    if (equip.shield.lifetime <= 0) {
+      equip.shield.lifetime = 0;
+      if (source.objectType === c.OBJECT_TYPE_SHIP) {
+        disableShield(source, equip.shield);
       }
     }
   }
+  if (equip.self_destruct_lifetime && equip.self_destruct_lifetime > 0) {
+    equip.self_destruct_lifetime -= 1;
+    if (equip.self_destruct_lifetime <= 0) {
+      // The equip self-destructs!
+      const equipIndex = source.equip.findIndex(e => e.id === equip.id);
+      if (equipIndex >= 0) {
+        source.equip.splice(equipIndex, 1);
+        removeEquip(source, equip);
+        console.log("Self destructing ", source.equip);
+      } else {
+        console.warn("Cannot self destruct equip", equip, " in ", source.equip);
+      }
+    }
+  }
+
+}
+
+/**
+ * Cools all equipment that have cool or lifetime (on all planets and all ships)
+ */
+export function coolAllEquip(equip) {
+  // Ship Equip
+  for (const ship of w.world.ships) {
+    if (ship.alive) {
+      for (const equip of ship.equip) {
+        coolEquip(ship, equip);
+      } // for equip
+    }
+  } // for ships
+
+  // Planet Equip
+  for (const planet of w.world.planets) {
+    for (const equip of planet.equip) {
+      coolEquip(planet, equip);
+    } // for equip
+  } // for planet
 }
 
 /**

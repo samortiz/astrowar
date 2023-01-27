@@ -1,6 +1,7 @@
 import React from 'react';
 import './InfoFly.css';
 import * as c from '../functions/client-constants.js';
+import * as fly from '../functions/fly.js';
 import {HEATBAR, Heatbar} from "./Heatbar";
 import {PushButton} from "./PushButton";
 import {StatusButton} from "./StatusButton";
@@ -9,6 +10,7 @@ export function InfoFly() {
   const world = window.world;
   const player = world.displayData?.player;
   const ship = player?.currentShip;
+  const shield = fly.getEquippedShield(ship);
 
   function playerJoinsGame() {
     console.log('client calling join ');
@@ -47,64 +49,88 @@ export function InfoFly() {
       <button onClick={() => printInfo()}> Info </button>
 
       {player && ship?.alive &&
-      <div className='top-row'>
-        <div>
-          <div>Ship</div>
-          <table>
-            <thead>
-            <tr>
-              <th style={{paddingRight: '10px'}}>Armor</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td style={{textAlign: 'center'}}>
-                <Heatbar type={HEATBAR.COLOR} curr={ship.armor} max={ship.armorMax}/>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                {Math.floor(ship.armor)} / {ship.armorMax}
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className='bluescreen-container'>
-          <div className='bluescreen-background'>
-            <img src='images/blue_screen.png' className='stretch' alt='bluescreen'/>
-          </div>
-          <div className='bluescreen-text'>
-            <table cellPadding='4'>
+      <div>
+        <div className='top-row'>
+          <div className='ship-display'>
+            <div>Ship</div>
+            <table>
               <thead>
               <tr>
-                <th colSpan='100%'>Resources</th>
+                <th style={{paddingRight: '10px'}}>Armor</th>
+                <th>
+                  {shield && shield.shield?.active &&
+                  <span>
+                    Shield
+                  </span>
+                  }
+                </th>
               </tr>
               </thead>
               <tbody>
               <tr>
-                <td>Titatium</td>
-                <td>{Math.floor(ship.resources.titanium)}</td>
+                <td style={{textAlign: 'center'}}>
+                  <Heatbar type={HEATBAR.COLOR} curr={ship.armor} max={ship.armorMax}/>
+                </td>
+                <td>
+                  {shield && shield.shield.active &&
+                  <span>
+                      <Heatbar type={HEATBAR.RED} curr={shield.shield.lifetime} max={shield.shield.lifetimeMax}/>
+                      <Heatbar type={HEATBAR.COLOR} curr={shield.shield.armor} max={shield.shield.armorMax}/>
+                    </span>
+                  }
+                </td>
               </tr>
               <tr>
-                <td>Gold</td>
-                <td>{Math.floor(ship.resources.gold)}</td>
-              </tr>
-              <tr>
-                <td>Uranium</td>
-                <td>{Math.floor(ship.resources.uranium)}</td>
-              </tr>
-              <tr>
-                <td>Death Count&nbsp;</td>
-                <td>{player.deathCount}</td>
+                <td>
+                  {Math.floor(ship.armor)} / {ship.armorMax}
+                </td>
+                <td>
+                  {shield && shield.shield?.active &&
+                  <span>
+                    {Math.floor(shield.shield.armor)} / {shield.shield.armorMax}
+                  </span>
+                  }
+                </td>
               </tr>
               </tbody>
             </table>
           </div>
+
+          <div className='bluescreen-container'>
+            <div className='bluescreen-background'>
+              <img src='images/blue_screen.png' className='stretch' alt='bluescreen'/>
+            </div>
+            <div className='bluescreen-text'>
+              <table cellPadding='4'>
+                <thead>
+                <tr>
+                  <th colSpan='100%'>Resources</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                  <td>Titatium</td>
+                  <td>{Math.floor(ship.resources.titanium)}</td>
+                </tr>
+                <tr>
+                  <td>Gold</td>
+                  <td>{Math.floor(ship.resources.gold)}</td>
+                </tr>
+                <tr>
+                  <td>Uranium</td>
+                  <td>{Math.floor(ship.resources.uranium)}</td>
+                </tr>
+                <tr>
+                  <td>Death Count&nbsp;</td>
+                  <td>{player.deathCount}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <table>
+        <table className="equip-list">
           <tbody>
           <tr>
             <td>
@@ -132,11 +158,10 @@ export function InfoFly() {
                 </tbody>
               </table>
             </td>
-            <td style={{paddingLeft:'10px'}}> </td>
+            <td style={{paddingLeft: '10px'}}> </td>
           </tr>
           </tbody>
         </table>
-
       </div>
       }
     </div>

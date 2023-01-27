@@ -1,4 +1,3 @@
-import * as c from './s_constants.js';
 import * as b from './s_blueprints.js';
 import * as w from './s_world.js';
 import * as utils from './s_utils.js';
@@ -15,8 +14,8 @@ export function runShipAi(ship) {
     hasMoved = turretAi(ship, 0.7);
   } else if (ship.aiType === b.AI_MISSILE) {
     hasMoved = missileAi(ship);
-  } else if (ship.aiType === b.AI_KAMIKAZI) {
-    hasMoved = kamikaziAi(ship);
+  } else if (ship.aiType === b.AI_MISSILE_NO_MOMENTUM) {
+    hasMoved = missileAiNoMomentum(ship);
   } else if (ship.aiType === b.AI_MINE) {
     hasMoved = mineAi(ship);
   } else if (ship.aiType === b.AI_NONE) {
@@ -63,7 +62,7 @@ export function getNearestOpponentTarget(currShip, seeCloaked=false, seeStealth=
   let minDist = null;
   for (let ship of w.world.ships) {
     const canSee = (seeCloaked || !manage.isCloaked(ship)) && (seeStealth || !manage.isStealth(ship));
-    if (ship.alive && canSee && ship.playerId !== currShip.playerId) {
+    if (ship.alive && canSee && ship.playerId !== currShip.playerId && !ship.inStorage) {
       let dist = utils.distanceBetween(currShip.x, currShip.y, ship.x, ship.y);
       if (!target || (dist < minDist)) {
         target = ship;
@@ -108,7 +107,7 @@ export function missileAi(missile) {
   if (target && dist <= missile.viewRange) {
     if (missile.landed) {
       missile.landed = false;
-      run.propelShip(missile, 100);
+      run.propelShip(missile, 30);
     } else {
       let dirToTarget = utils.directionTo(missile.x, missile.y, target.x, target.y);
       let {xAmt, yAmt} = utils.dirComponents(dirToTarget, missile.propulsion);
@@ -124,9 +123,9 @@ export function missileAi(missile) {
 /**
  * AI that tries to crash into the nearest enemy
  */
-export function kamikaziAi(missile) {
+export function missileAiNoMomentum(missile) {
   if (!missile.viewRange) {
-    console.warn("Kamikazi cannot see, no view range");
+    console.warn("missileAiNoMomentum cannot see, no view range");
     return false;
   }
   const {target, dist} = getNearestOpponentTarget(missile, false, true);
@@ -137,9 +136,10 @@ export function kamikaziAi(missile) {
     } else {
       let dirToTarget = utils.directionTo(missile.x, missile.y, target.x, target.y);
       // We are moving without momentum, so propulsion is not our acceleration but distance
-      let {xAmt, yAmt} = utils.dirComponents(dirToTarget, (missile.propulsion * 25));
+      let {xAmt, yAmt} = utils.dirComponents(dirToTarget, (missile.propulsion * 50));
       missile.x += xAmt;
       missile.y += yAmt;
+      console.log('moving towards ', target.name, ' => ', xAmt, ',', yAmt);
       if (missile.vx > 0) {
         missile.vx = 0;
       }
