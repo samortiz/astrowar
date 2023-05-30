@@ -46,18 +46,18 @@ export const OUTER_RING_MAX = 60000;
 
 export const UNIVERSE_RINGS = [
   {
-    planetCount: 25,
-    minDist: 6000, maxDist: 8000,
-    minDistToOtherPlanet: 150,
-    minPlanetRadius: 300, maxPlanetRadius: 500,
-    planetFiles: [PLANET_GREEN_FILE],
-  },
-  {
-    planetCount: 400,
-    minDist: 1500, maxDist: 12000,
+    planetCount: 50,
+    minDist: 1500, maxDist: 6000,
     minDistToOtherPlanet: 200,
     minPlanetRadius: 150, maxPlanetRadius: 500,
     planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
   },
 
+  {
+    planetCount: 60,
+    minDist: 3000, maxDist: 4000,
+    minDistToOtherPlanet: 100,
+    minPlanetRadius: 150, maxPlanetRadius: 500,
+    planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
+  },
 ];

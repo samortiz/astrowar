@@ -25,9 +25,9 @@ export function mainServerLoop() {
 
   // Generate planet resources
   for (const planet of world.planets) {
-    planet.resources.titanium += planet.generateResources.titanium;
-    planet.resources.gold += planet.generateResources.gold;
-    planet.resources.uranium += planet.generateResources.uranium;
+    planet.resources.titanium += planet.generateResources.titanium * 20;  // DEBUG (and below)
+    planet.resources.gold += planet.generateResources.gold * 20;
+    planet.resources.uranium += planet.generateResources.uranium * 20;
   }
 
   // Expire explosions
@@ -56,7 +56,7 @@ export function mainServerLoop() {
  */
 export function moveBullets() {
   // Move bullets (reverse so we can remove dead bullets as we go)
-  for (let i=world.bullets.length-1; i>=0; i--) {
+  for (let i = world.bullets.length - 1; i >= 0; i--) {
     const bullet = world.bullets[i];
     bullet.x = bullet.x + bullet.vx;
     bullet.y = bullet.y + bullet.vy;
@@ -68,7 +68,7 @@ export function moveBullets() {
         damageShip(hitObject, bullet.damage);
       }
     }
-    if (bullet.ttl <=0) {
+    if (bullet.ttl <= 0) {
       // Remove bullet from bullets array
       world.bullets.splice(i, 1);
     }
@@ -148,7 +148,7 @@ export function firePrimaryWeapon(ship) {
 }
 
 export function selectFirstSecondaryWeapon(ship) {
-  for (let i=0; i< ship.equip.length; i++) {
+  for (let i = 0; i < ship.equip.length; i++) {
     if (ship.equip[i].type === b.EQUIP_TYPE_SECONDARY_WEAPON) {
       ship.selectedSecondaryWeaponIndex = i;
       return;
@@ -228,16 +228,31 @@ function turnShip(ship, left) {
       turnSpeed += equip.boostSpeed;
     }
   }
+  let armorCount = 0;
+  for (const equip of ship.equip) {
+    if (equip.type === b.EQUIP_TYPE_ARMOR && equip.hinderTurn) {
+      turnSpeed = Math.max(turnSpeed - (equip.hinderTurn * armorCount), 0.05);
+      armorCount += 1;
+    }
+  }
   ship.rotation = utils.normalizeRadian(ship.rotation + turnSpeed * (left ? -1 : 1));
 }
 
-export function propelShip(ship, boost=1) {
+export function propelShip(ship, boost = 1) {
   let propulsion = ship.propulsion;
   for (const equip of ship.equip) {
     if (equip.type === b.EQUIP_TYPE_SPEED && equip.boostSpeed) {
       propulsion += equip.boostSpeed;
     }
   }
+  let armorCount = 0;
+  for (const equip of ship.equip) {
+    if (equip.type === b.EQUIP_TYPE_ARMOR && equip.hinderPropulsion) {
+      propulsion = Math.max((propulsion - (equip.hinderPropulsion * armorCount)), 0.5);
+      armorCount += 1;
+    }
+  }
+  console.log('prop=', propulsion);
   ship.vx += propulsion * Math.cos(ship.rotation) * boost;
   ship.vy += propulsion * Math.sin(ship.rotation) * boost;
 }
@@ -255,8 +270,8 @@ export function brakeShip(ship) {
     }
   } else {
     // No break installed - we'll still slow down
-    ship.vx -= ship.vx * 0.06;
-    ship.vy -= ship.vy * 0.06;
+    ship.vx -= ship.vx * 0.07;
+    ship.vy -= ship.vy * 0.07;
   }
 }
 
@@ -304,10 +319,10 @@ export function handlePressedKey(player, key) {
       propelShip(player.currentShip);
       break;
     case c.KEY_Q:
-        if (!ship.landed) {
-          thrustShip(ship, true);
-        }
-        break;
+      if (!ship.landed) {
+        thrustShip(ship, true);
+      }
+      break;
     case c.KEY_E:
       if (!ship.landed) {
         thrustShip(ship, false);
@@ -344,7 +359,7 @@ export function checkForPressedKeys(player, playerKeys) {
 
 // Return the object hit : should be a planet or ship
 // id will be the calling object - don't collide with this
-export function hitsPlanetOrShip(id, x,y, radius) {
+export function hitsPlanetOrShip(id, x, y, radius) {
   for (let ship of world.ships) {
     if (!ship.alive || ship.id === id || ship.inStorage) {
       continue;
@@ -402,9 +417,9 @@ export function shipsCollide(shipA, shipB) {
   const e2 = 1;
   const d = x * x + y * y;
   const uAB = (shipA.vx * x + shipA.vy * y) / d;  // normal component force A into B
-  const u2  = (shipA.vy * x - shipA.vx * y) / d;  // tangent component force A
+  const u2 = (shipA.vy * x - shipA.vx * y) / d;  // tangent component force A
   const uBA = (shipB.vx * x + shipB.vy * y) / d;  // normal component force B into A
-  const u4  = (shipB.vy * x - shipB.vx * y) / d;  // tangent component force B
+  const u4 = (shipB.vy * x - shipB.vx * y) / d;  // tangent component force B
   // Force from B into A along normal, scaled for mass ratio and restitution
   const uA = ((mA - mB) / mm * uAB + (2 * mB) / mm * uBA) * e1;
   // Force from A into B along normal, scaled for mass ratio and restitution
@@ -461,7 +476,7 @@ export function shipsCollide(shipA, shipB) {
   }
 }
 
-export function damageShip(ship, damage, useShield=true) {
+export function damageShip(ship, damage, useShield = true) {
   if (!ship || damage <= 0) {
     return;
   }
@@ -604,7 +619,7 @@ export function coolEquip(source, equip) {
 /**
  * Cools all equipment that have cool or lifetime (on all planets and all ships)
  */
-export function coolAllEquip(equip) {
+export function coolAllEquip() {
   // Ship Equip
   for (const ship of w.world.ships) {
     if (ship.alive) {

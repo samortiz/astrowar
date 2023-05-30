@@ -26,6 +26,9 @@ export function FactoryButtonRow({template}) {
     const newShip = template.createShip.type;
     description += ` Cost (${newShip.cost.titanium}T ${newShip.cost.gold}G ${newShip.cost.uranium}U)`;
   }
+  if (template.objectType === c.OBJECT_TYPE_SHIP) {
+    description = `${template.description} with ${template.armorMax} armor and ${template.equipMax} slots`
+  }
 
   // We pretend the current ship is in storage in the planet
   if (ship.alive && template.name === ship.name) {

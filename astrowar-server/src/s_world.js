@@ -31,21 +31,21 @@ function createPlanets() {
 
       const generateResources = {titanium:0, gold:0, uranium:0};
       if (fileName === c.PLANET_ROCK_FILE) {
-        generateResources.titanium = 2;
-        generateResources.gold = 1;
-        generateResources.uranium = 1;
-      } else if (fileName === c.PLANET_RED_FILE) {
-        generateResources.titanium = 1;
+        generateResources.titanium = 3;
         generateResources.gold = 2;
         generateResources.uranium = 1;
+      } else if (fileName === c.PLANET_RED_FILE) {
+        generateResources.titanium = 2;
+        generateResources.gold = 3;
+        generateResources.uranium = 1;
       } else if (fileName === c.PLANET_PURPLE_FILE) {
-        generateResources.titanium = 1;
-        generateResources.gold = 1;
-        generateResources.uranium = 2;
+        generateResources.titanium = 0.5;
+        generateResources.gold = 0.5;
+        generateResources.uranium = 3;
       } else if (fileName === c.PLANET_GREEN_FILE) {
-        generateResources.titanium = 1.5;
-        generateResources.gold = 1.5;
-        generateResources.uranium = 1.5;
+        generateResources.titanium = 2;
+        generateResources.gold = 2;
+        generateResources.uranium = 2;
       }
 
       // Setup the planet
