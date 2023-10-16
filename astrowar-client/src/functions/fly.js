@@ -17,6 +17,7 @@ export function drawScreen() {
   }
   updatePlayer(displayData.player);
   moveBackground();
+  updatePlanetOwners(displayData.planetOwners);
   drawAllPlanets();
   drawAllShips(displayData.ships);
   drawAllBullets(displayData.bullets);
@@ -172,6 +173,11 @@ export function getEquippedShield(ship) {
   return shield;
 }
 
+function updatePlanetOwners(planetOwners) {
+  for (const planet of window.world.planets) {
+    planet.ownerColor = planetOwners[planet.id];
+  }
+}
 
 function drawAllPlanets() {
   for (const planet of window.world.planets) {
@@ -334,6 +340,7 @@ function getExplosionSprite(explosion) {
 
 export function drawMiniMap() {
   const selectedPlanet = window.world?.displayData?.player?.selectedPlanet;
+  const landed = window.world?.displayData?.player?.currentShip?.landed
   let g = window.world.system.miniMapGraphics;
   let view = window.world.view;
   let l = 0;
@@ -351,10 +358,16 @@ export function drawMiniMap() {
     if (planetOnMap(view, planet)) {
       let x = l + c.HALF_MINIMAP_WIDTH + ((planet.x - view.x) * c.MINIMAP_SCALE_X);
       let y = t + c.HALF_MINIMAP_HEIGHT + ((planet.y - view.y) * c.MINIMAP_SCALE_Y);
-      const planetColor = selectedPlanet && selectedPlanet.id === planet.id ? c.MINIMAP_SELECTED_PLANET_COLOR : c.PLANET_COLORS[planet.imageFile];
+      let planetColor = c.PLANET_COLORS[planet.imageFile];
+      if (landed && selectedPlanet && selectedPlanet.id === planet.id) {
+        planetColor = c.MINIMAP_SELECTED_PLANET_COLOR;
+      }
+      const planetOwnerColor = planet.ownerColor || planetColor;
       g.lineStyle(2, planetColor);
       g.beginFill(planetColor);
       g.drawCircle(x, y, planet.radius * c.MINIMAP_SCALE_X);
+      g.lineStyle(1, planetOwnerColor);
+      g.drawCircle(x, y, (planet.radius/2) * c.MINIMAP_SCALE_X);
       g.endFill();
     }
   }

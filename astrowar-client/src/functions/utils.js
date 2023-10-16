@@ -224,3 +224,19 @@ export function showToast(text) {
 export function getInt(val, def) {
   return parseInt(val) || def;
 }
+
+export function buttonDown(dir) {
+  const socket = window.world.system.socket;
+  socket.emit("keypress", {key:dir, isDown:true});
+}
+
+export function buttonUp(dir) {
+  const socket = window.world.system.socket;
+  socket.emit("keypress", {key:dir, isDown:false});
+}
+
+export function killContextMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  return false;
+}

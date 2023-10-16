@@ -62,6 +62,19 @@ export function randomFloat(min, max) {
 }
 
 /**
+ *  Returns a string with random hex digits
+ * @param length: lenth of String to return
+ */
+export function randomHex(length) {
+  const hexChars = '0123456789ABCDEF';
+  let str = '';
+  for (let i = 0; i <= length; i++) {
+    str += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
+  }
+  return str;
+}
+
+/**
  * @return true 50% of the time
  */
 export function randomBool() {

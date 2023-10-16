@@ -1,0 +1,22 @@
+.score-box {
+  border: 1px solid black;
+  margin-top: 30px;
+  padding: 5px;
+}
+
+.current-player-row {
+  border: 1px solid blue;
+  background-color: #505050;
+}
+
+.score-color {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.score-text {
+  display: inline-block;
+  white-space: nowrap;
+  margin-left: 10px;
+}

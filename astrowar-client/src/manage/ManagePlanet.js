@@ -1,13 +1,18 @@
 import React, {useState} from 'react';
 import './ManagePlanet.css';
 import 'font-awesome/css/font-awesome.min.css';
+import {Scoreboard} from "./Scoreboard";
+import * as c from "../functions/client-constants";
+import {buttonDown, buttonUp, killContextMenu} from "../functions/utils";
 
 export function ManagePlanet() {
   const [titaniumAmt, setTitaniumAmt] = useState('');
   const [goldAmt, setGoldAmt] = useState('');
   const [uraniumAmt, setUraniumAmt] = useState('');
 
-  let player = window.world.displayData.player;
+  let player = window.world.displayData?.player;
+  let scores = window.world.displayData?.scores.filter(s => s.score > 0);
+  scores.sort((a,b) => b.score - a.score);
   let planet = player.selectedPlanet;
   let ship = player.currentShip;
   let socket = window.world.system.socket;
@@ -110,6 +115,14 @@ export function ManagePlanet() {
           </tr>
           </tbody>
         </table>}
+
+        <button type='button' onMouseDown={() => buttonDown(c.UP)} onMouseUp={() => buttonUp(c.UP)}
+                onTouchStart={() => buttonDown(c.UP)} onTouchEnd={() => buttonUp(c.UP)}
+                onContextMenu={(event) => killContextMenu(event)}>
+          Leave Planet
+        </button>
+
+        <Scoreboard />
 
       </div>);
 }

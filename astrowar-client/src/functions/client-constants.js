@@ -13,7 +13,14 @@ export const RED = 0x500000;
 export const GREEN = 0x005000;
 export const PURPLE = 0x500050;
 
-export const SERVER_URL = "http://192.168.2.17:8080";
+export const LEFT = 'arrowleft';
+export const RIGHT = 'arrowright';
+export const UP = 'arrowup';
+export const DOWN = 'arrowdown';
+export const SPACE = ' ';
+export const SECONDARY = 'x';
+
+export const SERVER_URL = "http://192.168.2.10:8080";
 
 // Saved games
 export const LOCALSTORAGE_GAME_NAMES_KEY = 'saved-game-names';

@@ -6,6 +6,7 @@ import * as manage from './s_manage.js'
 import * as run from './s_run.js'
 import {fireSecondaryWeapon} from "./s_run.js";
 import {selectSecondaryWeaponIndex} from "./s_manage.js";
+import {randomFloat, randomHex} from "./s_utils.js";
 
 export const world = {
   players: [],
@@ -47,13 +48,17 @@ function createPlanets() {
         generateResources.gold = 2;
         generateResources.uranium = 2;
       }
+      const massResourceModifier = (mass / 20000);
+      generateResources.titanium = generateResources.titanium * massResourceModifier;
+      generateResources.gold = generateResources.gold * massResourceModifier;
+      generateResources.uranium = generateResources.uranium * massResourceModifier;
 
       // Setup the planet
       let planet = createPlanet(fileName, radius, mass, generateResources);
       let {x, y} = getFreeXy(planet, ring.minDistToOtherPlanet, 0, ring.minDist, ring.maxDist);
       planet.x = x;
       planet.y = y;
-      console.log('created planet at ', x, ',', y, ' mass=',mass);
+      console.log('created planet at ', x, ',', y, ' mass=',mass, 'resource=',generateResources);
     } // for i
   } // for ring
 }
@@ -227,7 +232,7 @@ export function getRandomPlayerColor() {
       return c.PLAYER_COLORS[i];
     }
   }
-  return "0xEFEFEF";
+  return "0x"+randomHex(6);
 }
 
 export function getPlayer(socketId) {
@@ -261,6 +266,8 @@ export function createPlanet(imageFile, radius, mass, generateResources) {
   planet.ships = []; // stored ships
   planet.equip = []; // stored equipment
   planet.radius = radius;
+  planet.ownerId = null; // set when landing
+  planet.ownerColor = null; // set when landing
   world.planets.push(planet);
   return planet;
 }

@@ -63,6 +63,24 @@ export function getAllPlanetsDisplay() {
   return planets;
 }
 
+export function getScores() {
+  const scores = [];
+  for (let player of w.world.players) {
+    scores.push({id:player.id, color: player.color, score: 0});
+  }
+  for (let planet of w.world.planets) {
+    if (planet.ownerId) {
+      const scoreObj = scores.find(s => s.id === planet.ownerId);
+      if (scoreObj) {
+        scoreObj.score += planet.resources.titanium;
+        scoreObj.score += planet.resources.gold;
+        scoreObj.score += planet.resources.uranium;
+      }
+    }
+  }
+  return scores;
+}
+
 export function getDisplay(player) {
   const currentShip = player.currentShip;
 
@@ -92,7 +110,12 @@ export function getDisplay(player) {
       explosions.push(getExplosionDisplay(explosion));
     }
   }
-  return {player: playerDisplay, ships, bullets, explosions};
+  const planetOwners = {};
+  for (let planet of w.world.planets) {
+    planetOwners[planet.id] = planet.ownerColor;
+  }
+  const scores = getScores();
+  return {player: playerDisplay, ships, bullets, explosions, planetOwners, scores};
 }
 
 export function getJoinData(socket, name) {

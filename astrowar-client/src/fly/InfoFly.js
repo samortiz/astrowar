@@ -5,6 +5,7 @@ import * as fly from '../functions/fly.js';
 import {HEATBAR, Heatbar} from "./Heatbar";
 import {PushButton} from "./PushButton";
 import {StatusButton} from "./StatusButton";
+import {buttonDown, buttonUp, killContextMenu} from "../functions/utils";
 
 export function InfoFly() {
   const world = window.world;
@@ -162,6 +163,62 @@ export function InfoFly() {
           </tr>
           </tbody>
         </table>
+
+        <div className="button-control-container">
+          <div className="button-space">
+            <button type='button' onMouseDown={() => buttonDown(c.SECONDARY)} onMouseUp={() => buttonUp(c.SECONDARY)}
+                    onTouchStart={() => buttonDown(c.SECONDARY)} onTouchEnd={() => buttonUp(c.SECONDARY)}
+                    onContextMenu={(event) => killContextMenu(event)}>
+              <b>X</b>
+            </button>
+          </div>
+          <div className="button-space">
+            <button type='button' onMouseDown={() => buttonDown(c.SPACE)} onMouseUp={() => buttonUp(c.SPACE)}
+                    onTouchStart={() => buttonDown(c.SPACE)} onTouchEnd={() => buttonUp(c.SPACE)}
+                    onContextMenu={(event) => killContextMenu(event)}>
+              <i className="fa fa-crosshairs"> </i>
+            </button>
+          </div>
+          <table>
+            <tbody>
+            <tr>
+              <td> </td>
+              <td>
+                <button type='button' onMouseDown={() => buttonDown(c.UP)} onMouseUp={() => buttonUp(c.UP)}
+                        onTouchStart={() => buttonDown(c.UP)} onTouchEnd={() => buttonUp(c.UP)}
+                        onContextMenu={(event) => killContextMenu(event)}>
+                  <i className="fa fa-arrow-up"> </i>
+                </button>
+              </td>
+              <td> </td>
+            </tr>
+            <tr>
+              <td>
+                <button type='button' onMouseDown={() => buttonDown(c.LEFT)} onMouseUp={() => buttonUp(c.LEFT)}
+                        onTouchStart={() => buttonDown(c.LEFT)} onTouchEnd={() => buttonUp(c.LEFT)}
+                        onContextMenu={(event) => killContextMenu(event)}>
+                  <i className="fa fa-arrow-left"> </i>
+                </button>
+              </td>
+              <td>
+                <button type='button' onMouseDown={() => buttonDown(c.DOWN)} onMouseUp={() => buttonUp(c.DOWN)}
+                        onTouchStart={() => buttonDown(c.DOWN)} onTouchEnd={() => buttonUp(c.DOWN)}
+                        onContextMenu={(event) => killContextMenu(event)}>
+                  <i className="fa fa-arrow-down"> </i>
+                </button>
+              </td>
+              <td>
+                <button type='button' onMouseDown={() => buttonDown(c.RIGHT)} onMouseUp={() => buttonUp(c.RIGHT)}
+                        onTouchStart={() => buttonDown(c.RIGHT)} onTouchEnd={() => buttonUp(c.RIGHT)}
+                        onContextMenu={(event) => killContextMenu(event)}>
+                  <i className="fa fa-arrow-right"> </i>
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
       }
     </div>

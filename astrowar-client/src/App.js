@@ -74,7 +74,7 @@ export default class App extends React.Component {
       window.world.gameTickCount += 1;
       window.world.system.gameLoop(delta);
     }
-    // Force redraw all the react HTML (doesn't need to be updated 60 times / sec)
+    // Force redraw all the react HTML
     if (window.world.gameTickCount % 15 === 0) {
       this.forceUpdate();
     }

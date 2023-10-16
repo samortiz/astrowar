@@ -33,6 +33,7 @@ export const WORMHOLE_SPRITE = "wormhole_sprite" // Flag value to do wormhole sp
 
 export const PLAYER_COLORS = ["0xFF1050","0x20CC20","0x5050EE","0xFFFF00","0xFF00FF","0x00FFFF","0xAA5510","0x999999"];
 
+export const GLOBAL_RESOURCE_RATE = 0.1; // rate for all resources (more is faster generation)
 export const GRAVITATIONAL_CONST = 2;
 export const PLANET_DENSITY = new Map();
 PLANET_DENSITY.set(PLANET_ROCK_FILE, 0.3);
@@ -41,23 +42,23 @@ PLANET_DENSITY.set(PLANET_GREEN_FILE, 0.3);
 PLANET_DENSITY.set(PLANET_PURPLE_FILE, 0.3);
 PLANET_DENSITY.set(WORMHOLE_SPRITE, 15);
 
-export const OUTER_RING_MIN = 50000; // This is where we dump extra planets that won't fit into the universe
-export const OUTER_RING_MAX = 60000;
+export const OUTER_RING_MIN = 10000; // This is where we dump extra planets that won't fit into the universe
+export const OUTER_RING_MAX = 11000;
 
 export const UNIVERSE_RINGS = [
   {
     planetCount: 50,
-    minDist: 1500, maxDist: 6000,
+    minDist: 1700, maxDist: 6000,
     minDistToOtherPlanet: 200,
-    minPlanetRadius: 150, maxPlanetRadius: 500,
+    minPlanetRadius: 300, maxPlanetRadius: 500,
     planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
   },
 
   {
-    planetCount: 60,
-    minDist: 3000, maxDist: 4000,
-    minDistToOtherPlanet: 100,
-    minPlanetRadius: 150, maxPlanetRadius: 500,
+    planetCount: 50,
+    minDist: 3500, maxDist: 5000,
+    minDistToOtherPlanet: 120,
+    minPlanetRadius: 100, maxPlanetRadius: 400,
     planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
   },
 ];

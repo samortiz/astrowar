@@ -25,9 +25,9 @@ export function mainServerLoop() {
 
   // Generate planet resources
   for (const planet of world.planets) {
-    planet.resources.titanium += planet.generateResources.titanium * 20;  // DEBUG (and below)
-    planet.resources.gold += planet.generateResources.gold * 20;
-    planet.resources.uranium += planet.generateResources.uranium * 20;
+    planet.resources.titanium += planet.generateResources.titanium * c.GLOBAL_RESOURCE_RATE;
+    planet.resources.gold += planet.generateResources.gold * c.GLOBAL_RESOURCE_RATE;
+    planet.resources.uranium += planet.generateResources.uranium * c.GLOBAL_RESOURCE_RATE;
   }
 
   // Expire explosions
@@ -518,9 +518,9 @@ export function landShip(ship, planet) {
     // If a player is using this ship, then this is the selected planet
     if (player.currentShip.id === ship.id) {
       player.selectedPlanet = planet; // currently selected planet (for manage UI)
+      planet.ownerId = player.id; // Player lands and owns the planet
+      planet.ownerColor = player.color;
     }
-  } else {
-    console.log('landed ', ship);
   }
 }
 
