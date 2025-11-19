@@ -128,7 +128,12 @@ socketIo.on("connection", (socket) => {
       let source = sourceId === ship.id ? ship : (sourceId === planet.id ? planet : null);
       let target = targetId === ship.id ? ship : (targetId === planet.id ? planet : null);
       if (source && target) {
-        manage.transferResource(source.resources, target.resources, transferData.resourceType, transferData.amt);
+        if ((targetId === ship.id) && (ship.resources.titanium + ship.resources.gold + ship.resources.uranium >= 900)) {
+          console.log("Cannot transfer over ship max");
+        } else {
+          const cappedAmt = ((transferData.amt > 300) || !transferData.amt) ? 300 : transferData.amt;
+          manage.transferResource(source.resources, target.resources, transferData.resourceType, cappedAmt);
+        }
       } else {
         console.log("Player tried to transfer resources to/from not his current ship and planet. source=", source, " target=",target);
       }

@@ -20,18 +20,13 @@ export const DOWN = 'arrowdown';
 export const SPACE = ' ';
 export const SECONDARY = 'x';
 
-export const SERVER_URL = "http://192.168.2.10:8080";
-
-// Saved games
-export const LOCALSTORAGE_GAME_NAMES_KEY = 'saved-game-names';
+export const SERVER_URL = "http://192.168.0.13:8080";
 
 // Screen Layout
 export const SCREEN_WIDTH = 1000;
 export const SCREEN_HEIGHT = 1000;
 export const HALF_SCREEN_WIDTH = SCREEN_WIDTH / 2;
 export const HALF_SCREEN_HEIGHT = SCREEN_HEIGHT / 2;
-export const NEARBY_WIDTH = SCREEN_WIDTH * 3;
-export const NEARBY_HEIGHT = SCREEN_HEIGHT * 3;
 // size of minimap on screen
 export const MINIMAP_WIDTH = 250;
 export const MINIMAP_HEIGHT = 250;
@@ -95,8 +90,6 @@ export const SHIELD_GREEN_FILE = "shield_green.png";
 export const SHIELD_WHITE_FILE = "shield_white.png";
 export const SHIP_BALL_FILE = "ship_ball.png";
 export const SHIP_CARGO_FILE = "ship_cargo.png";
-export const SHIP_EXPLORER_FILE = "ship_explorer.png";
-export const SHIP_FAST_FILE = "ship_fast.png";
 export const SHIP_FIGHTER_FILE = "ship_fighter.png";
 export const SHIP_HEAVY_FILE = "ship_heavy.png";
 export const SHIP_MISSILE_FILE = "ship_missile.png";

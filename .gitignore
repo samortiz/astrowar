@@ -25,6 +25,7 @@ npm-debug.log*
 
 # Intellij
 .idea
+astrowar.iml
 
 # TypeScript v1 declaration files
 **/typings/

@@ -66,17 +66,7 @@ export function getAllPlanetsDisplay() {
 export function getScores() {
   const scores = [];
   for (let player of w.world.players) {
-    scores.push({id:player.id, color: player.color, score: 0});
-  }
-  for (let planet of w.world.planets) {
-    if (planet.ownerId) {
-      const scoreObj = scores.find(s => s.id === planet.ownerId);
-      if (scoreObj) {
-        scoreObj.score += planet.resources.titanium;
-        scoreObj.score += planet.resources.gold;
-        scoreObj.score += planet.resources.uranium;
-      }
-    }
+    scores.push({id:player.id, color: player.color, score: player.score});
   }
   return scores;
 }
@@ -88,6 +78,7 @@ export function getDisplay(player) {
     id: player.id,
     color: player.color,
     deathCount : player.deathCount,
+    score: player.score,
     x: currentShip ? currentShip.x : player.x,
     y: currentShip ? currentShip.y : player.y,
     currentShip: currentShip,

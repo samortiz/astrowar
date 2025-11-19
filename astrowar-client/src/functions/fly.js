@@ -362,12 +362,16 @@ export function drawMiniMap() {
       if (landed && selectedPlanet && selectedPlanet.id === planet.id) {
         planetColor = c.MINIMAP_SELECTED_PLANET_COLOR;
       }
+
       const planetOwnerColor = planet.ownerColor || planetColor;
       g.lineStyle(2, planetColor);
       g.beginFill(planetColor);
       g.drawCircle(x, y, planet.radius * c.MINIMAP_SCALE_X);
-      g.lineStyle(1, planetOwnerColor);
-      g.drawCircle(x, y, (planet.radius/2) * c.MINIMAP_SCALE_X);
+      // Only show ownership of the central planet (scored)
+      if (planet.x === 0 && planet.y === 0) {
+        g.lineStyle(2, planetOwnerColor);
+        g.drawCircle(x, y, (planet.radius/2) * c.MINIMAP_SCALE_X);
+      }
       g.endFill();
     }
   }

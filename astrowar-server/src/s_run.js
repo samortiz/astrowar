@@ -41,6 +41,17 @@ export function mainServerLoop() {
     }
   }
 
+  // Update Score
+  for (const planet of world.planets) {
+    if (planet.x == 0 && planet.y == 0) {
+      const ownerId = planet.ownerId;
+      if (ownerId) {
+        const player = world.players.find(p => p.id === ownerId); 
+        player.score += 1;
+      }
+    }
+  }
+
   // Update the display for all players
   for (let player of world.players) {
     const socket = w.getPlayerSocket(player.socketId);

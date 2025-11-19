@@ -24,6 +24,21 @@ export const OBJECT_TYPE_SHIP = "ship";
 export const OBJECT_TYPE_BULLET = "bullet";
 export const OBJECT_TYPE_EQUIP = "equip";
 
+// EQUIP_TYPES exist on client and server (and need to match)
+export const EQUIP_TYPE_BRAKE = "Brake";
+export const EQUIP_TYPE_PRIMARY_WEAPON = "Primary Weapon";
+export const EQUIP_TYPE_SECONDARY_WEAPON = "Secondary Weapon";
+export const EQUIP_TYPE_THRUSTER = "Thruster";
+export const EQUIP_TYPE_ARMOR = "Armor";
+export const EQUIP_TYPE_REPAIR_DROID = "Repair Droid";
+export const EQUIP_TYPE_GUNNERY_DROID = "Gunnery Droid";
+export const EQUIP_TYPE_SHIELD_DROID = "Shield Droid";
+export const EQUIP_TYPE_SPEED = "Speed";
+export const EQUIP_TYPE_TURN = "Turn";
+export const EQUIP_TYPE_STORAGE = "Storage";
+export const EQUIP_TYPE_AUTOLANDER = "Autolander";
+export const EQUIP_TYPE_GRAVITY_SHIELD = "GravityShield";
+
 export const PLANET_GREEN_FILE = "planet_green.png";
 export const PLANET_PURPLE_FILE = "planet_purple.png";
 export const PLANET_RED_FILE = "planet_red.png";
@@ -47,18 +62,32 @@ export const OUTER_RING_MAX = 11000;
 
 export const UNIVERSE_RINGS = [
   {
-    planetCount: 50,
-    minDist: 1700, maxDist: 6000,
+    planetCount: 1,
+    minDist: 0, maxDist: 0,
+    minDistToOtherPlanet: 500,
+    minPlanetRadius: 300, maxPlanetRadius: 300,
+    planetFiles: [PLANET_GREEN_FILE],
+  },
+  {
+    planetCount: 6,
+    minDist: 750, maxDist: 1000,
     minDistToOtherPlanet: 200,
-    minPlanetRadius: 300, maxPlanetRadius: 500,
-    planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
+    minPlanetRadius: 80, maxPlanetRadius: 100,
+    planetFiles: [PLANET_PURPLE_FILE],
+  },
+  {
+    planetCount: 12,
+    minDist: 1100, maxDist: 1600,
+    minDistToOtherPlanet: 150,
+    minPlanetRadius: 100, maxPlanetRadius: 250,
+    planetFiles: [PLANET_RED_FILE],
   },
 
   {
-    planetCount: 50,
-    minDist: 3500, maxDist: 5000,
-    minDistToOtherPlanet: 120,
+    planetCount: 70,
+    minDist: 2000, maxDist: 3000,
+    minDistToOtherPlanet: 150,
     minPlanetRadius: 100, maxPlanetRadius: 400,
-    planetFiles: [PLANET_GREEN_FILE, PLANET_ROCK_FILE, PLANET_RED_FILE, PLANET_PURPLE_FILE],
+    planetFiles: [PLANET_ROCK_FILE],
   },
 ];

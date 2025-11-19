@@ -204,13 +204,13 @@ export const EQUIP_STAPLE_GUN_HEAVY = {
 
 // Secondary (more at end of file after the ships)
 export const EQUIP_SHIELD = {
-  name: "Force Shield", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_SECONDARY_WEAPON, cool: 0, coolTime: 600,
+  name: "Force Shield", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_SECONDARY_WEAPON, cool: 0, coolTime: 500,
   shield: {
     active: false,
     armor: 500,
     armorMax: 500,
-    lifetime: 300,
-    lifetimeMax: 300,
+    lifetime: 400,
+    lifetimeMax: 400,
     spriteFile: SHIELD_BLUE_FILE,
     radius: 0
   },
@@ -219,7 +219,7 @@ export const EQUIP_SHIELD = {
 
 // Droids
 export const EQUIP_R2D2 = {
-  name: "R2D2 Repair Droid", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_REPAIR_DROID, repairSpeed: 0.2,
+  name: "R2D2 Repair Droid", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_REPAIR_DROID, repairSpeed: 0.75,
   cost: {titanium: 50, gold: 300, uranium: 100},
   description: "Repairs your ship while you are flying."
 };
@@ -319,7 +319,7 @@ export const SHIP_FIGHTER = {
     uranium: 0,
   },
   equipMax: 9,
-  equip: [],
+  equip: [EQUIP_STREAM_BLASTER, EQUIP_BRAKE],
   armorMax: 150,
   armor: 150,
   crashSpeed: 1.5,
@@ -548,14 +548,14 @@ export const EQUIP_BOMB_LAUNCHER = {
   description: "Fires explosive missiles.",
 };
 export const EQUIP_CLOAK = {
-  name: "Scanner Cloak", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_SECONDARY_WEAPON, coolTime: 400, cool: 0, cloak: true,
-  lifetime: {lifetime:0, lifetimeMax:300},
+  name: "Scanner Cloak", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_SECONDARY_WEAPON, coolTime: 450, cool: 0, cloak: true,
+  lifetime: {lifetime:0, lifetimeMax:400},
   cost: {titanium: 100, gold: 100, uranium: 100},
   description: "Hide your ship from all scanners.",
 };
 export const EQUIP_STEALTH_SKIN = {
-  name: "Stealth Skin", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_SECONDARY_WEAPON, coolTime: 400, cool: 0, stealth: true,
-  lifetime: {lifetime: 0, lifetimeMax: 300},
+  name: "Stealth Skin", objectType: c.OBJECT_TYPE_EQUIP, type: EQUIP_TYPE_SECONDARY_WEAPON, coolTime: 450, cool: 0, stealth: true,
+  lifetime: {lifetime: 0, lifetimeMax: 400},
   cost: {titanium: 100, gold: 100, uranium: 100},
   description: "Makes you hard to see in deep space.",
 };

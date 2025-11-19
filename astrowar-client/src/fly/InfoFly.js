@@ -125,6 +125,10 @@ export function InfoFly() {
                   <td>Death Count&nbsp;</td>
                   <td>{player.deathCount}</td>
                 </tr>
+                <tr>
+                  <td>Score&nbsp;</td>
+                  <td>{player.score}</td>
+                </tr>
                 </tbody>
               </table>
             </div>

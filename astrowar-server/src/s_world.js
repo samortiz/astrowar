@@ -5,8 +5,9 @@ import * as server from "./astrowar-server.js";
 import * as manage from './s_manage.js'
 import * as run from './s_run.js'
 import {fireSecondaryWeapon} from "./s_run.js";
-import {selectSecondaryWeaponIndex} from "./s_manage.js";
+import {addEquip, makeEquip, selectSecondaryWeaponIndex} from "./s_manage.js";
 import {randomFloat, randomHex} from "./s_utils.js";
+import {EQUIP_ARMOR} from "./s_blueprints.js";
 
 export const world = {
   players: [],
@@ -32,21 +33,21 @@ function createPlanets() {
 
       const generateResources = {titanium:0, gold:0, uranium:0};
       if (fileName === c.PLANET_ROCK_FILE) {
-        generateResources.titanium = 3;
-        generateResources.gold = 2;
-        generateResources.uranium = 1;
-      } else if (fileName === c.PLANET_RED_FILE) {
-        generateResources.titanium = 2;
+        generateResources.titanium = 10;
         generateResources.gold = 3;
         generateResources.uranium = 1;
+      } else if (fileName === c.PLANET_RED_FILE) {
+        generateResources.titanium = 3;
+        generateResources.gold = 10;
+        generateResources.uranium = 1;
       } else if (fileName === c.PLANET_PURPLE_FILE) {
-        generateResources.titanium = 0.5;
-        generateResources.gold = 0.5;
-        generateResources.uranium = 3;
-      } else if (fileName === c.PLANET_GREEN_FILE) {
         generateResources.titanium = 2;
         generateResources.gold = 2;
-        generateResources.uranium = 2;
+        generateResources.uranium = 10;
+      } else if (fileName === c.PLANET_GREEN_FILE) {
+        generateResources.titanium = 0;
+        generateResources.gold = 0;
+        generateResources.uranium = 0;
       }
       const massResourceModifier = (mass / 20000);
       generateResources.titanium = generateResources.titanium * massResourceModifier;
@@ -143,7 +144,12 @@ export function setupNewShipForPlayer(player) {
   }
   player.x = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
   player.y = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
-  const ship = createShip(b.SHIP_EXPLORER, player);
+  const ship = createShip(b.SHIP_FIGHTER, player);
+  for (let i=0; i<2; i++) {
+    const armor = makeEquip(EQUIP_ARMOR);
+    ship.equip.push(armor);
+    addEquip(ship, armor);
+  }
   setupTempStartupItems(ship);
   world.ships.push(ship);
   player.currentShip = ship;
@@ -213,7 +219,8 @@ export function createPlayer(socket, name) {
     currentShip: null,
     x: 0, // replaced soon
     y: 0, // replaced soon
-    deathCount: 0
+    deathCount: 0,
+    score: 0,
   };
   world.players.push(player);
   setupNewShipForPlayer(player);
@@ -261,7 +268,12 @@ export function createPlanet(imageFile, radius, mass, generateResources) {
   planet.x = 0; // temp should get reset
   planet.y = 0; // temp should get reset
   planet.mass = mass;
-  planet.resources = {titanium:0, gold:0, uranium:0};
+  let initResourceAmt = imageFile === c.PLANET_GREEN_FILE ? 0 : 10000;
+  planet.resources = {
+    titanium: initResourceAmt,
+    gold: initResourceAmt,
+    uranium: initResourceAmt,
+  };
   planet.generateResources = generateResources;
   planet.ships = []; // stored ships
   planet.equip = []; // stored equipment

@@ -26,19 +26,21 @@ export function transferResource(source, target, resourceType, requestedAmtStr) 
  * Move all resources to the planet
  */
 export function unloadShip(ship, planet) {
-  transferResource(ship.resources, planet.resources, 'titanium', ship.resources.titanium, null);
-  transferResource(ship.resources, planet.resources, 'gold', ship.resources.gold, null);
-  transferResource(ship.resources, planet.resources, 'uranium', ship.resources.uranium, null);
+  transferResource(ship.resources, planet.resources, 'titanium', ship.resources.titanium);
+  transferResource(ship.resources, planet.resources, 'gold', ship.resources.gold);
+  transferResource(ship.resources, planet.resources, 'uranium', ship.resources.uranium);
 }
 
 /**
  * Take all the resources from the planet. This is for quick restocking of resources
  */
 export function loadShip(ship, planet) {
-  transferResource(planet.resources, ship.resources, 'titanium', planet.resources.titanium, null);
-  transferResource(planet.resources, ship.resources, 'gold', planet.resources.gold, null);
-  transferResource(planet.resources, ship.resources, 'uranium', planet.resources.uranium, null);
-  console.log('loaded ', ship, ' from ',planet);
+  if ((ship.resources.titanium + ship.resources.gold + ship.resources.uranium) >= 900) {
+    return; // won't transfer more than 900
+  }
+  transferResource(planet.resources, ship.resources, 'titanium', 300);
+  transferResource(planet.resources, ship.resources, 'gold', 300);
+  transferResource(planet.resources, ship.resources, 'uranium', 300);
 }
 
 export function costToRepair(ship) {
@@ -131,6 +133,27 @@ export function makeEquip(blueprint) {
 }
 
 /**
+ * @return true if the equip can be added to the ship
+ */
+function canEquip(ship, equip) {
+  if (!ship || !ship.equip || !equip) {
+    return false;
+  }
+  // No more space
+  if (ship.equip.length >= ship.equipMax) {
+    return false;
+  }
+  console.log('equip type ', equip.type, ' c=',c.EQUIP_TYPE_PRIMARY_WEAPON);
+  // Some equip you can only have one
+  if ([c.EQUIP_TYPE_BRAKE, c.EQUIP_TYPE_PRIMARY_WEAPON, c.EQUIP_TYPE_THRUSTER].includes(equip.type)) {
+    if (ship.equip.find((eq) => eq.type === equip.type)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Builds equipment or a ship and puts it into storage on the planet
  * @param clientBlueprint to build (sent from client and not trusted)
  * @param planet planet to pull resources and store finished product
@@ -151,9 +174,15 @@ export function build(clientBlueprint, planet, player) {
     newShip.inStorage = true;
     planet.ships.push(newShip);
     w.world.ships.push(newShip);
+    // Switch to the newly built ship immediately
+    w.startUsingShip(player, newShip, planet);
   } else if (blueprint.objectType === c.OBJECT_TYPE_EQUIP) {
     let newEquip = makeEquip(blueprint);
     planet.equip.push(newEquip);
+    // Move equip directly onto the current ship
+    if (canEquip(player.currentShip, newEquip)) {
+      moveEquip(planet, player.currentShip, newEquip, player);  
+    }
   } else {
     console.warn("Cannot build object of unknown type ", blueprint.objectType);
   }
