@@ -91,21 +91,6 @@ export function getPointFrom(startX, startY, dir, distance) {
 }
 
 /**
- * Calc gravity for point.
- * @return {{x: number, y: number, dir: number}} This will be the x and y forces applied to the object (not a point)
- */
-export function calcGravity(x, y, planet) {
-  let distance = distanceBetween(x, y, planet.x, planet.y);
-  if (distance < 10) {
-    distance = 10;
-  }
-  let gravityDirection = Math.atan2(x - planet.x, y - planet.y);
-  let gravityX = c.GRAVITATIONAL_CONST * planet.mass / Math.pow(distance, 2) * -Math.sin(gravityDirection);
-  let gravityY = c.GRAVITATIONAL_CONST * planet.mass / Math.pow(distance, 2) * -Math.cos(gravityDirection);
-  return {x:gravityX, y:gravityY, dir:gravityDirection};
-}
-
-/**
  * Does a deep clone of an object
  * NOTE: Only clones things that JSON serialize!  No functions or classes with prototype stuff
  */

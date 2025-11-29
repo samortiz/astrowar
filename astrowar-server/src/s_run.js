@@ -23,13 +23,6 @@ export function mainServerLoop() {
 
   coolAllEquip(); // on ships and planets
 
-  // Generate planet resources
-  for (const planet of world.planets) {
-    planet.resources.titanium += planet.generateResources.titanium * c.GLOBAL_RESOURCE_RATE;
-    planet.resources.gold += planet.generateResources.gold * c.GLOBAL_RESOURCE_RATE;
-    planet.resources.uranium += planet.generateResources.uranium * c.GLOBAL_RESOURCE_RATE;
-  }
-
   // Expire explosions
   for (let explosion of world.explosions) {
     if (explosion.ttl > 0) {
@@ -102,15 +95,6 @@ export function moveShips() {
       }
     }
     if (!ship.landed) {
-      // Gravity
-      const hasGravityShield = !!utils.getEquip(ship, b.EQUIP_TYPE_GRAVITY_SHIELD);
-      if (!hasGravityShield) {
-        for (let planet of world.planets) {
-          let grav = utils.calcGravity(ship.x, ship.y, planet);
-          ship.vx += grav.x;
-          ship.vy += grav.y;
-        }
-      }
       ship.x = ship.x + ship.vx;
       ship.y = ship.y + ship.vy;
 
@@ -187,11 +171,6 @@ export function fireSecondaryWeapon(ship) {
   let weapon = getSecondaryWeapon(ship);
   if (weapon && (weapon.cool <= 0)) {
     if (weapon.createShip) {
-      if (!manage.canAfford(null, ship, weapon.createShip.type.cost)) {
-        // We don't fire the weapon - we can't afford it
-        return;
-      }
-      manage.payResourceCost(null, ship, weapon.createShip.type.cost);
       // find the player
       const player = w.world.players.find(p => p.id === ship.playerId);
       const child = w.createShip(weapon.createShip.type, player);
@@ -396,7 +375,6 @@ export function hitsPlanetOrShip(id, x, y, radius) {
 }
 
 export function destroyShip(ship) {
-  manage.scatterResourcesAndEquip(ship);
   w.createExplosion(ship.x, ship.y);
   ship.alive = false;
   ship.landed = false; // you're no longer on the planet
@@ -670,18 +648,13 @@ export function primaryWeaponRange(ship) {
 export function runDroids(ship) {
   for (let droid of ship.equip) {
     if ((droid.type === b.EQUIP_TYPE_REPAIR_DROID) && (ship.armor < ship.armorMax)) {
-      let cost = {titanium: 0, gold: 0, uranium: 0};
-      if (manage.canAfford(null, ship, cost)) {
-        ship.armor += droid.repairSpeed;
-        manage.payResourceCost(null, ship, cost);
-      }
+      ship.armor += droid.repairSpeed;
     } else if (droid.type === b.EQUIP_TYPE_GUNNERY_DROID) {
       shootNearestEnemy(ship, droid.weapon);
     }
     // NOTE: Shield droid runs in checkForBulletCollision
   } // for
 }
-
 
 /**
  * Fires the weapon in the direction of the nearest alien (if able to)

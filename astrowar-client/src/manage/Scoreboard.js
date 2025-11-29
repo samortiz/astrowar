@@ -2,11 +2,14 @@ import React from 'react';
 import './Scoreboard.css';
 import 'font-awesome/css/font-awesome.min.css';
 
-export function Scoreboard() {
+export function Scoreboard({highScoreOnly}) {
   let player = window.world.displayData?.player;
   let scores = window.world.displayData?.scores.filter(s => s.score > 0);
   if (scores) {
     scores.sort((a, b) => b.score - a.score);
+  }
+  if (highScoreOnly === 'true') {
+    scores = scores.slice(0,6);
   }
 
   if (!scores) {

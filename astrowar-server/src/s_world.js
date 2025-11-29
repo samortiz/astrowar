@@ -30,36 +30,12 @@ function createPlanets() {
       let fileName = ring.planetFiles[utils.randomInt(0, ring.planetFiles.length - 1)];
       let radius = utils.randomInt(ring.minPlanetRadius, ring.maxPlanetRadius);
       let mass = radius * radius * c.PLANET_DENSITY.get(fileName);
-
-      const generateResources = {titanium:0, gold:0, uranium:0};
-      if (fileName === c.PLANET_ROCK_FILE) {
-        generateResources.titanium = 10;
-        generateResources.gold = 3;
-        generateResources.uranium = 1;
-      } else if (fileName === c.PLANET_RED_FILE) {
-        generateResources.titanium = 3;
-        generateResources.gold = 10;
-        generateResources.uranium = 1;
-      } else if (fileName === c.PLANET_PURPLE_FILE) {
-        generateResources.titanium = 2;
-        generateResources.gold = 2;
-        generateResources.uranium = 10;
-      } else if (fileName === c.PLANET_GREEN_FILE) {
-        generateResources.titanium = 0;
-        generateResources.gold = 0;
-        generateResources.uranium = 0;
-      }
-      const massResourceModifier = (mass / 20000);
-      generateResources.titanium = generateResources.titanium * massResourceModifier;
-      generateResources.gold = generateResources.gold * massResourceModifier;
-      generateResources.uranium = generateResources.uranium * massResourceModifier;
-
       // Setup the planet
-      let planet = createPlanet(fileName, radius, mass, generateResources);
+      let planet = createPlanet(fileName, radius, mass);
       let {x, y} = getFreeXy(planet, ring.minDistToOtherPlanet, 0, ring.minDist, ring.maxDist);
       planet.x = x;
       planet.y = y;
-      console.log('created planet at ', x, ',', y, ' mass=',mass, 'resource=',generateResources);
+      console.log('created planet at ', x, ',', y, ' mass=',mass);
     } // for i
   } // for ring
 }
@@ -123,7 +99,7 @@ export function createShip(shipBlueprint, player) {
   ship.vy = 0;
   ship.rotation = 0;
   ship.radius =  ship.imageRadius;
-  ship.resources = {titanium: 0, gold: 0, uranium: 0};
+  ship.armor = ship.armorMax;
   // Create copies of all the equip on the ship
   ship.equip = []
   for (const equipBlueprint of shipBlueprint.equip) {
@@ -142,15 +118,15 @@ export function setupNewShipForPlayer(player) {
   if (player && player.currentShip && player.currentShip.alive) {
     player.currentShip.alive = false;
   }
-  player.x = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
-  player.y = utils.randomInt(0, 1000) * (utils.randomBool() ? 1 : -1);
+  player.x = utils.randomInt(1500, 2000) * (utils.randomBool() ? 1 : -1);
+  player.y = utils.randomInt(1500, 2000) * (utils.randomBool() ? 1 : -1);
   const ship = createShip(b.SHIP_FIGHTER, player);
   for (let i=0; i<2; i++) {
     const armor = makeEquip(EQUIP_ARMOR);
     ship.equip.push(armor);
     addEquip(ship, armor);
   }
-  setupTempStartupItems(ship);
+  // setupTempStartupItems(ship);  // Not needed right now, maybe we want this later
   world.ships.push(ship);
   player.currentShip = ship;
   player.alive = true;
@@ -221,6 +197,7 @@ export function createPlayer(socket, name) {
     y: 0, // replaced soon
     deathCount: 0,
     score: 0,
+    loadouts: [], // {name:'asf', blueprint:{...}}  Ship blueprints to make equipping faster
   };
   world.players.push(player);
   setupNewShipForPlayer(player);
@@ -260,7 +237,7 @@ export function getPlayerSocket(socketId) {
   return socket;
 }
 
-export function createPlanet(imageFile, radius, mass, generateResources) {
+export function createPlanet(imageFile, radius, mass) {
   let planet = {};
   planet.id = generateUniqueId();
   planet.objectType = c.OBJECT_TYPE_PLANET;
@@ -268,13 +245,6 @@ export function createPlanet(imageFile, radius, mass, generateResources) {
   planet.x = 0; // temp should get reset
   planet.y = 0; // temp should get reset
   planet.mass = mass;
-  let initResourceAmt = imageFile === c.PLANET_GREEN_FILE ? 0 : 10000;
-  planet.resources = {
-    titanium: initResourceAmt,
-    gold: initResourceAmt,
-    uranium: initResourceAmt,
-  };
-  planet.generateResources = generateResources;
   planet.ships = []; // stored ships
   planet.equip = []; // stored equipment
   planet.radius = radius;
@@ -337,4 +307,45 @@ export function isPlayerShip(ship) {
     }
   }
   return false;
+}
+
+
+/**
+ * Saves a loadout ship
+ */
+export function saveLoadout(player, ship, name) {
+  const shipBlueprint = utils.cloneDeep(ship);
+  shipBlueprint.id = null;
+  let loadout = player.loadouts.find(l => l.name === name);
+  if (!loadout) {
+    loadout = {'name':name, blueprint:shipBlueprint}
+    player.loadouts.push(loadout);
+  } else {
+    loadout.blueprint = shipBlueprint;
+  }
+}
+
+/**
+ * Equips a ship with loadout data
+ */
+export function equipLoadout(player, name) {
+  let loadout = player.loadouts.find(l => l.name === name);
+  if (!loadout || !loadout.blueprint) {
+    console.log('Could not find loadout named ', name, ' with blueprint in player.loadouts ', player.loadouts);
+    return;
+  }
+  const planet = player.selectedPlanet;
+  if (!player.selectedPlanet) {
+    console.log('Cannot equip loadout with no selected planet');
+    return;
+  }
+  const oldShip = player.currentShip;
+
+  let newShip = createShip(loadout.blueprint, player);
+  newShip.inStorage = true;
+  planet.ships.push(newShip);
+  world.ships.push(newShip);
+  startUsingShip(player, newShip, planet);
+  // Remove the old ship from the planet (it ceases to exist)
+  planet.ships = planet.ships.filter(s => s.id !== oldShip.id);
 }

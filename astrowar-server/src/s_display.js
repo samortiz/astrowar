@@ -83,6 +83,7 @@ export function getDisplay(player) {
     y: currentShip ? currentShip.y : player.y,
     currentShip: currentShip,
     selectedPlanet: player.selectedPlanet,
+    loadouts: player.loadouts,
   }
 
   const ships = [];

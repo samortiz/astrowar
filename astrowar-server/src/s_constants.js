@@ -37,7 +37,6 @@ export const EQUIP_TYPE_SPEED = "Speed";
 export const EQUIP_TYPE_TURN = "Turn";
 export const EQUIP_TYPE_STORAGE = "Storage";
 export const EQUIP_TYPE_AUTOLANDER = "Autolander";
-export const EQUIP_TYPE_GRAVITY_SHIELD = "GravityShield";
 
 export const PLANET_GREEN_FILE = "planet_green.png";
 export const PLANET_PURPLE_FILE = "planet_purple.png";
@@ -49,7 +48,6 @@ export const WORMHOLE_SPRITE = "wormhole_sprite" // Flag value to do wormhole sp
 export const PLAYER_COLORS = ["0xFF1050","0x20CC20","0x5050EE","0xFFFF00","0xFF00FF","0x00FFFF","0xAA5510","0x999999"];
 
 export const GLOBAL_RESOURCE_RATE = 0.1; // rate for all resources (more is faster generation)
-export const GRAVITATIONAL_CONST = 2;
 export const PLANET_DENSITY = new Map();
 PLANET_DENSITY.set(PLANET_ROCK_FILE, 0.3);
 PLANET_DENSITY.set(PLANET_RED_FILE, 0.3);
@@ -71,22 +69,22 @@ export const UNIVERSE_RINGS = [
   {
     planetCount: 6,
     minDist: 750, maxDist: 1000,
-    minDistToOtherPlanet: 200,
+    minDistToOtherPlanet: 250,
     minPlanetRadius: 80, maxPlanetRadius: 100,
     planetFiles: [PLANET_PURPLE_FILE],
   },
   {
     planetCount: 12,
     minDist: 1100, maxDist: 1600,
-    minDistToOtherPlanet: 150,
+    minDistToOtherPlanet: 250,
     minPlanetRadius: 100, maxPlanetRadius: 250,
     planetFiles: [PLANET_RED_FILE],
   },
 
   {
-    planetCount: 70,
+    planetCount: 50,
     minDist: 2000, maxDist: 3000,
-    minDistToOtherPlanet: 150,
+    minDistToOtherPlanet: 250,
     minPlanetRadius: 100, maxPlanetRadius: 400,
     planetFiles: [PLANET_ROCK_FILE],
   },

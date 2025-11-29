@@ -22,10 +22,6 @@ export function FactoryButtonRow({template}) {
     const shield = template.shield;
     description = `${shield.armorMax}dmg for ${Math.round(shield.lifetimeMax/60)}s every ${Math.round(template.coolTime/60)}s`;
   }
-  if (template.createShip) {
-    const newShip = template.createShip.type;
-    description += ` Cost (${newShip.cost.titanium}T ${newShip.cost.gold}G ${newShip.cost.uranium}U)`;
-  }
   if (template.objectType === c.OBJECT_TYPE_SHIP) {
     description = `${template.description} with ${template.armorMax} armor and ${template.equipMax} slots`
   }
@@ -46,11 +42,7 @@ export function FactoryButtonRow({template}) {
       </td>
       <td className="factory-row">
       <button className="factory-button"
-        disabled={!game.canAfford(planet, ship, template.cost)}
         onClick={() => build(template)}>{template.name}</button>
-      </td>
-      <td className="factory-row">
-        <span className='cost'>{template.cost.titanium}T {template.cost.gold}G {template.cost.uranium}U</span>
       </td>
       <td className="factory-row">
         {description}

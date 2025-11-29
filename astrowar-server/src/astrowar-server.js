@@ -7,6 +7,7 @@ import express from "express"
 import cors from "cors"
 import { Server } from "socket.io"
 import {createServer} from "http"
+import {equipLoadout, saveLoadout} from "./s_world.js";
 
 
 const app = express();
@@ -71,34 +72,6 @@ socketIo.on("connection", (socket) => {
   });
 
   // Management commands
-  socket.on("load-ship", () => {
-    console.log("loading ship");
-    const player = w.getPlayer(socket.id);
-    if (!player) {
-      console.log("Cannot manage without player");
-      return;
-    }
-    if (player.currentShip && player.selectedPlanet) {
-      const ship = player.currentShip;
-      const planet = player.selectedPlanet;
-      manage.loadShip(ship, planet);
-    }
-  });
-
-  socket.on("unload-ship", () => {
-    console.log("unloading ship");
-    const player = w.getPlayer(socket.id);
-    if (!player) {
-      console.log("Cannot manage without player");
-      return;
-    }
-    if (player.currentShip && player.selectedPlanet) {
-      const ship = player.currentShip;
-      const planet = player.selectedPlanet;
-      manage.unloadShip(ship, planet);
-    }
-  });
-
   socket.on("repair-ship", () => {
     const player = w.getPlayer(socket.id);
     if (!player) {
@@ -112,32 +85,33 @@ socketIo.on("connection", (socket) => {
     }
   });
 
-  socket.on("transfer-resource", (transferData) => {
-    console.log("transfer ", transferData);
+  socket.on("save-loadout", (loadoutData) => {
     const player = w.getPlayer(socket.id);
     if (!player) {
-      console.log("Cannot manage without player");
+      console.log("Cannot save loadout without player");
       return;
     }
-    if (player.currentShip && player.selectedPlanet) {
-      const ship = player.currentShip;
-      const planet = player.selectedPlanet;
-      const sourceId = transferData.sourceId;
-      const targetId = transferData.targetId;
-      // Source and target must be the player's current ship and planet
-      let source = sourceId === ship.id ? ship : (sourceId === planet.id ? planet : null);
-      let target = targetId === ship.id ? ship : (targetId === planet.id ? planet : null);
-      if (source && target) {
-        if ((targetId === ship.id) && (ship.resources.titanium + ship.resources.gold + ship.resources.uranium >= 900)) {
-          console.log("Cannot transfer over ship max");
-        } else {
-          const cappedAmt = ((transferData.amt > 300) || !transferData.amt) ? 300 : transferData.amt;
-          manage.transferResource(source.resources, target.resources, transferData.resourceType, cappedAmt);
-        }
-      } else {
-        console.log("Player tried to transfer resources to/from not his current ship and planet. source=", source, " target=",target);
-      }
+    if (!player.currentShip) {
+      console.log('Cannot save loadout without a current ship');
+      return;
     }
+    const ship = player.currentShip;
+    const loadoutName = loadoutData.name;
+    saveLoadout(player, ship, loadoutName);
+  });
+
+  socket.on("equip-loadout", (loadoutData) => {
+    const player = w.getPlayer(socket.id);
+    if (!player) {
+      console.log("Cannot equip loadout without player");
+      return;
+    }
+    if (!player.currentShip) {
+      console.log('Cannot equip loadout without a current ship');
+      return;
+    }
+    const loadoutName = loadoutData.name;
+    equipLoadout(player, loadoutName);
   });
 
   socket.on("build", (blueprint) => {

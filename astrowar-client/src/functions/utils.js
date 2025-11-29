@@ -29,21 +29,6 @@ export function normalizeRadian(radians) {
   }
   return retVal;
 }
-  
-/**
- * Calc gravity for point.
- * @return {x,y,dir} This will be the x and y forces applied to the object (not a point)
- */
-export function calcGravity(x, y, planet) {
-  let distance = distanceBetween(x, y, planet.x, planet.y);
-  if (distance < 10) {
-    distance = 10;
-  }
-  let gravityDirection = Math.atan2(x - planet.x, y - planet.y);
-  let gravityX = c.GRAVITATIONAL_CONST * planet.mass / Math.pow(distance, 2) * -Math.sin(gravityDirection);
-  let gravityY = c.GRAVITATIONAL_CONST * planet.mass / Math.pow(distance, 2) * -Math.cos(gravityDirection);
-  return {x:gravityX, y:gravityY, dir:gravityDirection};
-}
 
 /**
  * @return the angle x1,y1 would need to face to point directly at x2,y2

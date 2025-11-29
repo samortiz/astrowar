@@ -20,7 +20,7 @@ export const DOWN = 'arrowdown';
 export const SPACE = ' ';
 export const SECONDARY = 'x';
 
-export const SERVER_URL = "http://192.168.0.13:8080";
+export const SERVER_URL = "http://192.168.0.34:8080";
 
 // Screen Layout
 export const SCREEN_WIDTH = 1000;
@@ -60,7 +60,6 @@ export const EQUIP_TYPE_SPEED = "Speed";
 export const EQUIP_TYPE_TURN = "Turn";
 export const EQUIP_TYPE_STORAGE = "Storage";
 export const EQUIP_TYPE_AUTOLANDER = "Autolander";
-export const EQUIP_TYPE_GRAVITY_SHIELD = "GravityShield";
 
 // Files
 export const SPRITESHEET_JSON = "images/spritesheet.json";

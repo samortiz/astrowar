@@ -1,5 +1,5 @@
 .planet-info {
-
+  margin-left:10px;
 }
 
 .transfer-input {
@@ -25,11 +25,19 @@
   margin-left: 10px;
 }
 
-.resource-table {
+.loadout-list {
   margin-top: 10px;
 }
 
-.resource-table td, .resource-table th {
-  padding-left: 5px;
-  padding-right: 5px;
+.loadout-title {
+  font-weight: bold;
+}
+
+.loadout-item {
+  padding: 5px;
+  margin-left: 10px;
+}
+
+.loadout-button {
+  margin-right: 5px;
 }
