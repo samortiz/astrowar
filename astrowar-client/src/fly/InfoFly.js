@@ -110,7 +110,7 @@ export function InfoFly() {
                     <td>{player.deathCount}</td>
                   </tr>
                   <tr>
-                    <td rowspan='2'>
+                    <td rowSpan='2'>
                       <Scoreboard highScoreOnly='true'/>
                     </td>
                   </tr>

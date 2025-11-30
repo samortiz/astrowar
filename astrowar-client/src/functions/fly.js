@@ -3,8 +3,12 @@ import {generateUniqueId} from "./game";
 
 // Main play mode - flying
 export function flyLoop(delta) {
-  if (delta > 1.005) {
+  if (delta > 1.5) {
     console.log('Lagging with delta=' + delta);
+  }
+  // You are never typing when in fly mode!
+  if (window.world.system.isTyping) {
+    window.world.system.isTyping = false;
   }
   drawScreen();
 }
@@ -184,7 +188,6 @@ function drawAllPlanets() {
     drawPlanetSprite(planet);
   }
 }
-
 
 function drawPlanetSprite(planet) {
   const system = window.world.system;

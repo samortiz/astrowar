@@ -1,6 +1,5 @@
 import {c} from './'
 import io from 'socket.io-client'
-import * as utils from './utils.js'
 
 /**
  * Creates an empty world object, with only basic properties.
@@ -139,29 +138,4 @@ export function getViewXy() {
 export function generateUniqueId() {
   window.world.maxId += 1;
   return window.world.maxId;
-}
-
-/**
- * Client-Side afford check!  NOTE: This is not guaranteed to work the server will make the final call!
- * Checks if the combined resources of planet and ship can afford the resources
- * Call this before calling payResourceCost
- * @return true if there are enough resources available
- */
-export function canAfford(planet, ship, resources) {
-  let titanium = 0;
-  let gold = 0;
-  let uranium = 0;
-  if (planet && planet.resources) {
-    titanium += utils.getInt(planet.resources.titanium, 0);
-    gold += utils.getInt(planet.resources.gold, 0);
-    uranium += utils.getInt(planet.resources.uranium, 0);
-  }
-  if (ship && ship.resources) {
-    titanium += utils.getInt(ship.resources.titanium, 0);
-    gold += utils.getInt(ship.resources.gold, 0);
-    uranium += utils.getInt(ship.resources.uranium, 0);
-  }
-  return (titanium >= resources.titanium)
-      && (gold >= resources.gold)
-      && (uranium >= resources.uranium);
 }

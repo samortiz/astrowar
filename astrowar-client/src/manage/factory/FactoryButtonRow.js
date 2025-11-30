@@ -1,7 +1,6 @@
 import React from 'react';
 import './FactoryButtonRow.css';
 import * as c from "../../functions/client-constants";
-import * as game from "../../functions/game";
 
 export function FactoryButtonRow({template}) {
   const world = window.world;

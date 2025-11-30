@@ -118,8 +118,12 @@ export function setupNewShipForPlayer(player) {
   if (player && player.currentShip && player.currentShip.alive) {
     player.currentShip.alive = false;
   }
-  player.x = utils.randomInt(1500, 2000) * (utils.randomBool() ? 1 : -1);
-  player.y = utils.randomInt(1500, 2000) * (utils.randomBool() ? 1 : -1);
+  // Spawn somewhere in the outside ring
+  let dir = utils.randomFloat(0, Math.PI * 2);
+  let dist = utils.randomInt(2000, 3000);
+  let {x, y} = utils.getPointFrom(0, 0, dir, dist);
+  player.x = x;
+  player.y = y;
   const ship = createShip(b.SHIP_FIGHTER, player);
   for (let i=0; i<2; i++) {
     const armor = makeEquip(EQUIP_ARMOR);

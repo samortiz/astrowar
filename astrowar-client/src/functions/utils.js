@@ -152,6 +152,9 @@ export function keyboardListener(value, socket) {
   key.release = undefined;
   //The `downHandler`
   key.downHandler = event => {
+    if (window.world.system.isTyping) {
+      return;
+    }
     if (event.key.toLowerCase() === key.value) {
       if (key.isUp && key.press) key.press();
       key.isDown = true;
