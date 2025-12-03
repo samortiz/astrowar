@@ -68,7 +68,7 @@ socketIo.on("connection", (socket) => {
       playerKeys[player.id] = keysForThisPlayer;
     }
     keysForThisPlayer[keyData.key] = keyData.isDown;
-    console.log('received key ', keyData);
+    // console.log('received key ', keyData);
   });
 
   // Management commands

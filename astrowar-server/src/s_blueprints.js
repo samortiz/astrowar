@@ -174,8 +174,8 @@ export const EQUIP_STAPLE_GUN_HEAVY = {
   type: EQUIP_TYPE_PRIMARY_WEAPON,
   coolTime: 3,
   cool: 0,
-  damage: 17,
-  speed: 13,
+  damage: 20,
+  speed: 15,
   lifetime: 100,
   jitter: 0.15,
   imageFile: BULLET_WHITE_FILE,
@@ -423,6 +423,44 @@ export const SHIP_BOMB = {
   description: "When it dies it detonates damaging everything nearby",
 };
 
+export const SHIP_ALIEN_TURRET = {
+  name: "Alien Turret",
+  objectType: c.OBJECT_TYPE_SHIP,
+  propulsion: 0.0,
+  turnSpeed: 0.0,
+  equipMax: 3,
+  equip: [EQUIP_FAST_BLASTER],
+  armorMax: 200,
+  armor: 200,
+  crashSpeed: 2,
+  crashAngle: 10,
+  imageScale: 1.5,
+  imageRadius: 24,  // 32w x 32h * scale = 16 * 1.5 = 24
+  imageFile: ALIEN_SHIP_BLUE_SMALL_FILE,
+  aiType: AI_TURRET,
+  description: "An unfriendly alien turret.",
+};
+
+export const SHIP_ALIEN_HEAVY = {
+  name: "Alien Heavy",
+  objectType: c.OBJECT_TYPE_SHIP,
+  propulsion: 0.35,
+  turnSpeed: 0.2,
+  equipMax: 3,
+  equip: [EQUIP_FAST_BLASTER],
+  armorMax: 100,
+  armor: 100,
+  crashSpeed: 2,
+  crashAngle: 10,
+  imageScale: 1,
+  imageRadius: 47,  // 98w x 93h * scale = 47 * 1 = 47
+  imageFile: ALIEN_SHIP_GREEN_LARGE_FILE,
+  aiType: AI_CREEPER,
+  viewRange: 500,
+  description: "An unfriendly alien.",
+};
+
+
 export const ALL_ALIENS = [SHIP_ALIEN_STEALTH];
 export const ALL_SHIPS = [SHIP_EXPLORER, SHIP_FAST, SHIP_HEAVY, SHIP_FIGHTER, SHIP_WING, ...ALL_ALIENS];
 
@@ -474,3 +512,35 @@ export const EQUIP_SECONDARY_WEAPONS = [EQUIP_DECOY_DEPLOYER, EQUIP_TURRET_DEPLO
 export const EQUIP_DROIDS = [EQUIP_R2D2, EQUIP_GUNNERY_DROID, EQUIP_SHIELD_DROID];
 export const ALL_EQUIP = [...EQUIP_UPGRADES, ...EQUIP_PRIMARY_WEAPONS, ...EQUIP_SECONDARY_WEAPONS, ...EQUIP_DROIDS];
 export const ALL_BLUEPRINTS = [...ALL_EQUIP, ...ALL_SHIPS];
+
+export const UNIVERSE_RINGS = [
+  {
+    planetCount: 1,
+    minDist: 0, maxDist: 0,
+    minDistToOtherPlanet: 500,
+    minPlanetRadius: 300, maxPlanetRadius: 300,
+    planetFiles: [c.PLANET_GREEN_FILE],
+  },
+  {
+    planetCount: 6,
+    minDist: 750, maxDist: 1000,
+    minDistToOtherPlanet: 250,
+    minPlanetRadius: 80, maxPlanetRadius: 100,
+    planetFiles: [c.PLANET_PURPLE_FILE],
+  },
+  {
+    planetCount: 12,
+    minDist: 1100, maxDist: 1600,
+    minDistToOtherPlanet: 250,
+    minPlanetRadius: 100, maxPlanetRadius: 250,
+    planetFiles: [c.PLANET_RED_FILE],
+  },
+
+  {
+    planetCount: 45,
+    minDist: 2000, maxDist: 3000,
+    minDistToOtherPlanet: 250,
+    minPlanetRadius: 100, maxPlanetRadius: 400,
+    planetFiles: [c.PLANET_ROCK_FILE],
+  },
+];

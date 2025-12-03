@@ -1,8 +1,11 @@
 import * as b from './s_blueprints.js';
+import * as c from './s_constants.js';
 import * as w from './s_world.js';
 import * as utils from './s_utils.js';
 import * as run from './s_run.js';
 import * as manage from './s_manage.js';
+import {getRandomPointDistanceFrom} from "./s_utils.js";
+import {SHIP_EXPLORER as dirToMove} from "./s_blueprints.js";
 
 
 export function runShipAi(ship) {
@@ -11,7 +14,9 @@ export function runShipAi(ship) {
   }
   let hasMoved = false;
   if (ship.aiType === b.AI_TURRET) {
-    hasMoved = turretAi(ship, 0.7);
+    hasMoved = turretAi(ship);
+  } else if (ship.aiType === b.AI_CREEPER) {
+    hasMoved = creeperAi(ship, false, true);
   } else if (ship.aiType === b.AI_MISSILE) {
     hasMoved = missileAi(ship);
   } else if (ship.aiType === b.AI_MISSILE_NO_MOMENTUM) {
@@ -39,15 +44,14 @@ export function shootAt(shooter, x, y, jitter) {
   run.firePrimaryWeapon(shooter, jitter);
 }
 
-export function turretAi(turretShip, jitter) {
+export function turretAi(turretShip) {
   const {target, dist} = getNearestOpponentTarget(turretShip, true, false);
   if (!target || !target.alive) {
     return false;
   }
   // we start shooting a little early before we can actually hit something
-  if (dist < (run.primaryWeaponRange(turretShip) + 100) ) {
-    console.log('shooting at ', target, ' turret=', turretShip);
-    shootAt(turretShip, target.x, target.y, jitter);
+  if (dist < (run.primaryWeaponRange(turretShip) + 150)) {
+    aimShotAt(turretShip, target, null);
   }
   return false;
 }
@@ -57,7 +61,7 @@ export function turretAi(turretShip, jitter) {
  * @currShip : the current ship to find nearby opponents for
  * returns {target:ship, dist:int }  x and y will be null if no living targets are found
  */
-export function getNearestOpponentTarget(currShip, seeCloaked=false, seeStealth=false) {
+export function getNearestOpponentTarget(currShip, seeCloaked = false, seeStealth = false) {
   let target = null;
   let minDist = null;
   for (let ship of w.world.ships) {
@@ -78,7 +82,7 @@ export function getNearestOpponentTarget(currShip, seeCloaked=false, seeStealth=
  * @currShip : any friendly ship except the one matching currShip.id
  * returns {target:X, dist:Y }  x and y will be null if no living targets are found
  */
-export function getNearestFriendlyTarget(currShip, seeCloaked=false, seeStealth=false) {
+export function getNearestFriendlyTarget(currShip, seeCloaked = false, seeStealth = false) {
   let target = null;
   let minDist = null;
   for (let ship of w.world.ships) {
@@ -166,7 +170,7 @@ export function mineAi(mine) {
     // Blow up the missile
     run.damageShip(mine, mine.armor);
     // Explosion crash.jpg is 128 x 128 - explosion visually is about 40px
-    const explosionScale = mine.viewRange  / 40;
+    const explosionScale = mine.viewRange / 40;
     w.createExplosion(mine.x, mine.y, explosionScale);
     // Damage nearby ships
     for (let ship of w.world.ships) {
@@ -186,7 +190,6 @@ export function noneAi(ship) {
   // Doesn't move
   return false;
 }
-
 
 /**
  * Determine x,y amounts needed to move around an obstacle, moving right or left from dirToTarget
@@ -226,8 +229,12 @@ export function getXYToMoveTowards(shipToMove, targetX, targetY, crashIntoEnemy)
     if (utils.distanceBetween(shipToMove.x + xAmt, shipToMove.y + yAmt, planet.x, planet.y) < (planet.radius + shipToMove.radius + 10)) {
       const moveAmt = goAround(shipToMove.x, shipToMove.y, shipToMove.propulsion, planet.x, planet.y, dirToTarget);
       if (willCollideWithPlanet(shipToMove.x + moveAmt.xAmt, shipToMove.y + moveAmt.yAmt, shipToMove.radius)) {
-        xAmt = 0;
-        yAmt = 0;
+        // If we are going to collide with a planet, we wil try backing away from the planet to prevent planet-hugging
+        const dirToPlanet = utils.directionTo(shipToMove.x, shipToMove.y, planet.x, planet.y);
+        const distToPlanetSurface = (planet.radius + shipToMove.radius) - utils.distanceBetween(planet.x, planet.y, shipToMove.x, shipToMove.y);
+        let newAmounts = utils.dirComponents(utils.normalizeRadian(dirToPlanet + Math.PI), Math.max(distToPlanetSurface, 20));
+        xAmt = newAmounts.xAmt;
+        yAmt = newAmounts.yAmt;
       } else {
         xAmt = moveAmt.xAmt;
         yAmt = moveAmt.yAmt;
@@ -237,7 +244,7 @@ export function getXYToMoveTowards(shipToMove, targetX, targetY, crashIntoEnemy)
 
   // Check for ships we should go around
   const nearestShip = crashIntoEnemy ? getNearestFriendlyTarget(shipToMove) :
-      getNearestShip(shipToMove.x + xAmt, shipToMove.y + yAmt, shipToMove.id);
+    getNearestShip(shipToMove.x + xAmt, shipToMove.y + yAmt, shipToMove.id);
   if (nearestShip.target && nearestShip.dist <= nearestShip.target.radius + shipToMove.radius + 20) {
     const moveAmt = goAround(shipToMove.x, shipToMove.y, shipToMove.propulsion, nearestShip.target.x, nearestShip.target.y, dirToTarget);
     if (willCollideWithShip(shipToMove.x + moveAmt.xAmt, shipToMove.y + moveAmt.yAmt, shipToMove.id, shipToMove.radius)) {
@@ -273,7 +280,7 @@ export function willCollideWithPlanet(x, y, shipRadius) {
   return false;
 }
 
-export function getNearestShip(x, y, shipId, ) {
+export function getNearestShip(x, y, shipId,) {
   let minDist = null;
   let target = null;
   for (let ship of w.world.ships) {
@@ -285,7 +292,7 @@ export function getNearestShip(x, y, shipId, ) {
       }
     }
   } // for
-  return {target:target, dist: minDist};
+  return {target: target, dist: minDist};
 }
 
 export function checkForCollisionWithShip(ship) {
@@ -318,3 +325,114 @@ export function getShield(ship) {
   return null;
 }
 
+/**
+ * Fire primary weapon in a best attempt to hit target ship
+ * This will take into account the target's movement and lead the shot
+ * @shooter ship with gun to fire
+ * @target ship to try to hit
+ * @weapon weapon to fire, if null it will fire the primary weapon on shooter
+ */
+export function aimShotAt(shooter, target, weapon) {
+  const gun = weapon ? weapon : utils.getEquip(shooter, c.EQUIP_TYPE_PRIMARY_WEAPON);
+  if (!gun) {
+    return;
+  }
+  const bulletSpeed = gun.speed;
+  const deltaX = target.x - shooter.x;
+  const deltaY = target.y - shooter.y;
+
+  // Target speed squared (v_t^2)
+  const targetSpeedSquared = target.vx * target.vx + target.vy * target.vy;
+
+  // Quadratic coefficients: a*t^2 + b*t + c = 0
+  const a = targetSpeedSquared - bulletSpeed * bulletSpeed;
+  const b = 2 * (deltaX * target.vx + deltaY * target.vy);
+  const cee = deltaX * deltaX + deltaY * deltaY;
+
+  // Calculate discriminant
+  const discriminant = b * b - 4 * a * cee;
+
+  // Check if a solution exists (discriminant >= 0)
+  if (discriminant < 0) {
+    // We can't make a shot, so shoot in their general direction
+    run.fireWeapon(gun, shooter);
+    return;
+  }
+
+  // Solve quadratic equation for time (take the positive root)
+  const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+  const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+  const t = (t1 > 0 && (t2 < 0 || t1 < t2)) ? t1 : t2;
+
+  if (t <= 0) {
+    // We can't make the shot, so shoot generally over that-a-way
+    run.fireWeapon(gun, shooter);
+    return;
+  }
+
+  // Calculate interception point
+  const interceptX = target.x + target.vx * t;
+  const interceptY = target.y + target.vy * t;
+
+  // Calculate direction vector and angle (in radians)
+  const dirX = interceptX - shooter.x;
+  const dirY = interceptY - shooter.y;
+  const angle = Math.atan2(dirY, dirX); // Angle in radians
+
+  // Fire
+  shooter.rotation = utils.normalizeRadian(angle);
+  run.fireWeapon(gun, shooter);
+}
+
+/**
+ * AI for aliens that move toward the player and shoots
+ * @ aimed : use good aim
+ * @return true if alien moved false otherwise
+ */
+export function creeperAi(alien, crashIntoPlayer = false, aimed = false) {
+  const viewRange = alien.viewRange || 1000;
+  let moved = false;
+  const {target: playerTarget, dist: distToOpponent} = getNearestOpponentTarget(alien);
+  if (!playerTarget) {
+    return;
+  }
+  if (distToOpponent < viewRange) {
+    let dirToTarget = utils.directionTo(alien.x, alien.y, playerTarget.x, playerTarget.y);
+    let {xAmt, yAmt} = getXYToMoveTowards(alien, playerTarget.x, playerTarget.y, crashIntoPlayer);
+    // Too close to an enemy, don't move as you might crash
+    if (!crashIntoPlayer && distToOpponent < (playerTarget.radius + alien.radius + 20)) {
+      xAmt = 0;
+      yAmt = 0;
+    }
+    // Don't crash into friends
+    const {target: friend} = getNearestFriendlyTarget(alien);
+    if (friend &&
+      (utils.distanceBetween(alien.x + xAmt, alien.y + yAmt, friend.x, friend.y) < (alien.radius + friend.radius + 10))) {
+      xAmt = 0;
+      yAmt = 0;
+    }
+    if (alien.armor < alien.armorMax) {
+      enableShieldIfNeeded(alien);
+    }
+    alien.x += xAmt;
+    alien.y += yAmt;
+    alien.rotation = dirToTarget;
+    moved = true;
+  } else {
+    // If nobody is in view, move back to the center
+    let {xAmt, yAmt} = getXYToMoveTowards(alien, 0, 0, crashIntoPlayer);
+    if (utils.distanceBetween(alien.x + xAmt, alien.y + yAmt, 0, 0,) > (300 + alien.radius)) {
+      alien.x += xAmt;
+      alien.y += yAmt;
+      moved = true;
+    }
+  }
+  if (distToOpponent < run.primaryWeaponRange(alien)) {
+    if (aimed) {
+      aimShotAt(alien, playerTarget, null);
+    } else {
+      shootAt(alien, playerTarget.x, playerTarget.y, 0.15);
+    }
+  }
+  return moved;
+}

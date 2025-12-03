@@ -3,26 +3,23 @@ import * as b from "./s_blueprints.js";
 import * as utils from "./s_utils.js";
 import * as display from './s_display.js';
 import * as w from './s_world.js';
+import {createShip, world} from './s_world.js';
 import * as manage from './s_manage.js';
 import * as ai from './s_ai.js';
 import {playerKeys} from "./astrowar-server.js";
-import {world} from "./s_world.js";
-import {removeEquip} from "./s_manage.js";
+import {distanceBetween, getRandomPointDistanceFrom} from "./s_utils.js";
 
 
 export function mainServerLoop() {
   moveBullets();
-
   // Check for player actions
   for (let player of world.players) {
     const keys = playerKeys[player.id];
     checkForPressedKeys(player, keys);
   }
-
+  createAliens();
   moveShips();
-
   coolAllEquip(); // on ships and planets
-
   // Expire explosions
   for (let explosion of world.explosions) {
     if (explosion.ttl > 0) {
@@ -33,26 +30,51 @@ export function mainServerLoop() {
       }
     }
   }
-
   // Update Score
   for (const planet of world.planets) {
-    if (planet.x == 0 && planet.y == 0) {
+    if (planet.x === 0 && planet.y === 0) {
       const ownerId = planet.ownerId;
       if (ownerId) {
-        const player = world.players.find(p => p.id === ownerId); 
+        const player = world.players.find(p => p.id === ownerId);
         player.score += 1;
       }
     }
   }
-
   // Update the display for all players
   for (let player of world.players) {
-    const socket = w.getPlayerSocket(player.socketId);
-    if (socket) {
-      socket.emit("update", display.getDisplay(player));
+    if (player.socketId) {
+      const socket = w.getPlayerSocket(player.socketId);
+      if (socket) {
+        socket.emit("update", display.getDisplay(player));
+      }
     }
   }
+}
 
+export function createAlienShip(blueprint, alienPlayer) {
+  let {x, y} = getRandomPointDistanceFrom(0, 0, 400, 450);
+  for (let ship of world.ships.filter(s => s.alive)) {
+    if (distanceBetween(x, y, ship.x, ship.y) < 200) {
+      // If this space is too close to another ship we will just give up, it will try again on the next run loop iteration (milliseconds)
+      // This prevents two ships colliding and getting blasted into outer space
+      return;
+    }
+  }
+  const alienShip = createShip(blueprint, alienPlayer);
+  alienShip.x = x;
+  alienShip.y = y;
+  world.ships.push(alienShip);
+}
+
+export function createAliens() {
+  const alienPlayer = world.players.find(p => p.name === c.ALIEN_PLAYER_NAME);
+  if (!alienPlayer) {
+    return;
+  }
+  const alienShipCount = world.ships.filter(s => s.playerId === alienPlayer.id && s.alive).length;
+  if (alienShipCount < 4) {
+    createAlienShip(b.SHIP_ALIEN_HEAVY, alienPlayer);
+  }
 }
 
 /**
@@ -97,7 +119,6 @@ export function moveShips() {
     if (!ship.landed) {
       ship.x = ship.x + ship.vx;
       ship.y = ship.y + ship.vy;
-
       const hitObject = hitsPlanetOrShip(ship.id, ship.x, ship.y, ship.radius);
       if (hitObject) {
         if (hitObject.objectType === c.OBJECT_TYPE_SHIP) {
@@ -120,7 +141,6 @@ export function fireWeapon(weapon, ship) {
   if (!weapon || weapon.cool > 0) {
     return;
   }
-
   if (weapon && (weapon.cool <= 0)) {
     weapon.bulletRadius = 10; // This should match the image file size and scale
     weapon.cool = weapon.coolTime; // this is decremented in coolWeapons
@@ -242,7 +262,6 @@ export function propelShip(ship, boost = 1) {
       armorCount += 1;
     }
   }
-  console.log('prop=', propulsion);
   ship.vx += propulsion * Math.cos(ship.rotation) * boost;
   ship.vy += propulsion * Math.sin(ship.rotation) * boost;
 }
@@ -382,10 +401,12 @@ export function destroyShip(ship) {
   const player = world.players.find(p => p.id === ship.playerId);
   if (player) {
     player.deathCount += 1;
-    if (ship.id === player.currentShip.id) {
+    if (player.currentShip && (ship.id === player.currentShip.id)) {
       player.selectedPlanet = null;
     }
   }
+  // Remove the dead ship
+  world.ships = world.ships.filter(s => s.id !== ship.id);
 }
 
 /**
@@ -478,7 +499,6 @@ export function damageShip(ship, damage, useShield = true) {
     }
   } else { // no shield (or damage type ignores shields)
     ship.armor = ship.armor - damage;
-    console.log('damage=', damage, ship);
     if (ship.armor <= 0) {
       ship.armor = 0;
       destroyShip(ship);
@@ -503,7 +523,7 @@ export function landShip(ship, planet) {
   ship.vy = 0;
   ship.landed = true;
   const player = world.players.find(p => p.id === ship.playerId);
-  if (player) {
+  if (player && player.currentShip) {
     // If a player is using this ship, then this is the selected planet
     if (player.currentShip.id === ship.id) {
       player.selectedPlanet = planet; // currently selected planet (for manage UI)
@@ -514,6 +534,9 @@ export function landShip(ship, planet) {
 }
 
 function takeOff(player) {
+  if (!player.currentShip) {
+    return;
+  }
   player.currentShip.landed = false;
   // This will give a little boost for takeoff (a double propulsion)
   propelShip(player.currentShip);
@@ -595,7 +618,7 @@ export function coolEquip(source, equip) {
       const equipIndex = source.equip.findIndex(e => e.id === equip.id);
       if (equipIndex >= 0) {
         source.equip.splice(equipIndex, 1);
-        removeEquip(source, equip);
+        manage.removeEquip(source, equip);
         console.log("Self destructing ", source.equip);
       } else {
         console.warn("Cannot self destruct equip", equip, " in ", source.equip);
@@ -667,8 +690,7 @@ export function shootNearestEnemy(ship, weapon) {
   const {target, dist} = ai.getNearestOpponentTarget(ship, true, false);
   if (target && (dist <= weaponRange(weapon))) {
     const origDir = ship.rotation;
-    ship.rotation = utils.normalizeRadian(Math.atan2(target.y - ship.y, target.x - ship.x));
-    fireWeapon(weapon, ship);
+    ai.aimShotAt(ship, target, weapon);
     ship.rotation = origDir;
   }
 }

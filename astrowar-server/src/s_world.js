@@ -4,10 +4,6 @@ import * as b from './s_blueprints.js'
 import * as server from "./astrowar-server.js";
 import * as manage from './s_manage.js'
 import * as run from './s_run.js'
-import {fireSecondaryWeapon} from "./s_run.js";
-import {addEquip, makeEquip, selectSecondaryWeaponIndex} from "./s_manage.js";
-import {randomFloat, randomHex} from "./s_utils.js";
-import {EQUIP_ARMOR} from "./s_blueprints.js";
 
 export const world = {
   players: [],
@@ -20,12 +16,13 @@ export const world = {
 
 function setupWorld() {
   createPlanets();
+  createPlayer(null, c.ALIEN_PLAYER_NAME);
 }
 setupWorld();
 
 // Go through all the rings and create planet objects
 function createPlanets() {
-  for (let ring of c.UNIVERSE_RINGS) {
+  for (let ring of b.UNIVERSE_RINGS) {
     for (let i = 0; i < ring.planetCount; i++) {
       let fileName = ring.planetFiles[utils.randomInt(0, ring.planetFiles.length - 1)];
       let radius = utils.randomInt(ring.minPlanetRadius, ring.maxPlanetRadius);
@@ -45,7 +42,7 @@ function createPlanets() {
  * This will recurse until it finds a free spot.
  * @return {{x, y}}
  */
-function getFreeXy(planet, minDistToPlanet, minDistToAlien, minDist, maxDist, failCount = 0) {
+export function getFreeXy(planet, minDistToPlanet, minDistToAlien, minDist, maxDist, failCount = 0) {
   let dir = utils.randomFloat(0, Math.PI * 2);
   let dist = utils.randomInt(minDist, maxDist);
   let {x, y} = utils.getPointFrom(0, 0, dir, dist);
@@ -67,7 +64,7 @@ function getFreeXy(planet, minDistToPlanet, minDistToAlien, minDist, maxDist, fa
  * Distance to the nearest planet that is not equal to origPlanet
  * @return {{nearestPlanetDist: number, nearestPlanet: null}}
  */
-function nearestPlanetDistance(origPlanet, x, y) {
+export function nearestPlanetDistance(origPlanet, x, y) {
   let minDist = 99999999999;
   let nearestPlanet = null;
   for (let planet of world.planets) {
@@ -119,16 +116,14 @@ export function setupNewShipForPlayer(player) {
     player.currentShip.alive = false;
   }
   // Spawn somewhere in the outside ring
-  let dir = utils.randomFloat(0, Math.PI * 2);
-  let dist = utils.randomInt(2000, 3000);
-  let {x, y} = utils.getPointFrom(0, 0, dir, dist);
+  let {x, y} = utils.getRandomPointDistanceFrom(0,0, 2000, 3000);
   player.x = x;
   player.y = y;
   const ship = createShip(b.SHIP_FIGHTER, player);
   for (let i=0; i<2; i++) {
-    const armor = makeEquip(EQUIP_ARMOR);
+    const armor = manage.makeEquip(b.EQUIP_ARMOR);
     ship.equip.push(armor);
-    addEquip(ship, armor);
+    manage.addEquip(ship, armor);
   }
   // setupTempStartupItems(ship);  // Not needed right now, maybe we want this later
   world.ships.push(ship);
@@ -150,13 +145,13 @@ export function setupTempStartupItems(ship) {
   cloak.self_destruct_lifetime = 500;
   ship.equip.push(cloak);
   const cloakIndex = ship.equip.findIndex(e => e.id === cloak.id);
-  selectSecondaryWeaponIndex(ship, cloakIndex);
-  fireSecondaryWeapon(ship);
+  manage.selectSecondaryWeaponIndex(ship, cloakIndex);
+  run.fireSecondaryWeapon(ship);
   cloak.lifetime.lifetime = 500; // give the user enough time to get away from enemies!
 
   // Select the jump
   const jumpIndex = ship.equip.findIndex(e => e.id === jump.id);
-  selectSecondaryWeaponIndex(ship, jumpIndex);
+  manage.selectSecondaryWeaponIndex(ship, jumpIndex);
 }
 
 export function startUsingShip(player, newShip, planet) {
@@ -194,7 +189,7 @@ export function createPlayer(socket, name) {
   const player = {
     id: generateUniqueId(),
     color: color,
-    socketId: socket.id,
+    socketId: socket ? socket.id : null,
     name,
     currentShip: null,
     x: 0, // replaced soon
@@ -204,8 +199,10 @@ export function createPlayer(socket, name) {
     loadouts: [], // {name:'asf', blueprint:{...}}  Ship blueprints to make equipping faster
   };
   world.players.push(player);
-  setupNewShipForPlayer(player);
-  server.playerSockets[player.socketId] = socket;
+  if (socket) {
+    setupNewShipForPlayer(player);
+    server.playerSockets[player.socketId] = socket;
+  }
   console.log("Added player ", player);
   return player;
 }
@@ -220,7 +217,7 @@ export function getRandomPlayerColor() {
       return c.PLAYER_COLORS[i];
     }
   }
-  return "0x"+randomHex(6);
+  return "0x"+utils.randomHex(6);
 }
 
 export function getPlayer(socketId) {
@@ -306,7 +303,7 @@ export function generateUniqueId() {
  */
 export function isPlayerShip(ship) {
   for (const player of world.players) {
-    if (player.currentShip.id === ship.id) {
+    if (player.currentShip && player.currentShip.id === ship.id) {
       return true;
     }
   }

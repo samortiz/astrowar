@@ -1,5 +1,3 @@
-import * as c from "./s_constants.js";
-
 /**
  * Returns the distance between two points
  */
@@ -61,9 +59,20 @@ export function randomFloat(min, max) {
   return min + (Math.random() * (max - min));
 }
 
+
+/**
+ * Gets a point between min-max distance from x,y
+ */
+export function getRandomPointDistanceFrom(sourceX, sourceY, minDist, maxDist) {
+  let dir = randomFloat(0, Math.PI * 2);
+  let dist = randomInt(minDist, maxDist);
+  return getPointFrom(sourceX, sourceY, dir, dist);
+}
+
+
 /**
  *  Returns a string with random hex digits
- * @param length: lenth of String to return
+ * @param length of String to return
  */
 export function randomHex(length) {
   const hexChars = '0123456789ABCDEF';

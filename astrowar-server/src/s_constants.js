@@ -1,6 +1,7 @@
 export const APP_VERSION = "0.01a";
 export const PORT = 8080;
 export const SERVER_TICK_MS = 50;
+export const ALIEN_PLAYER_NAME = 'alien';
 
 export const RIGHT = 'arrowright';
 export const LEFT = 'arrowleft';
@@ -58,34 +59,3 @@ PLANET_DENSITY.set(WORMHOLE_SPRITE, 15);
 export const OUTER_RING_MIN = 10000; // This is where we dump extra planets that won't fit into the universe
 export const OUTER_RING_MAX = 11000;
 
-export const UNIVERSE_RINGS = [
-  {
-    planetCount: 1,
-    minDist: 0, maxDist: 0,
-    minDistToOtherPlanet: 500,
-    minPlanetRadius: 300, maxPlanetRadius: 300,
-    planetFiles: [PLANET_GREEN_FILE],
-  },
-  {
-    planetCount: 6,
-    minDist: 750, maxDist: 1000,
-    minDistToOtherPlanet: 250,
-    minPlanetRadius: 80, maxPlanetRadius: 100,
-    planetFiles: [PLANET_PURPLE_FILE],
-  },
-  {
-    planetCount: 12,
-    minDist: 1100, maxDist: 1600,
-    minDistToOtherPlanet: 250,
-    minPlanetRadius: 100, maxPlanetRadius: 250,
-    planetFiles: [PLANET_RED_FILE],
-  },
-
-  {
-    planetCount: 50,
-    minDist: 2000, maxDist: 3000,
-    minDistToOtherPlanet: 250,
-    minPlanetRadius: 100, maxPlanetRadius: 400,
-    planetFiles: [PLANET_ROCK_FILE],
-  },
-];

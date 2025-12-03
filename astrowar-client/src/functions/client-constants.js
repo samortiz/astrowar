@@ -20,7 +20,7 @@ export const DOWN = 'arrowdown';
 export const SPACE = ' ';
 export const SECONDARY = 'x';
 
-export const SERVER_URL = "http://192.168.0.34:8080";
+export const SERVER_URL = "http://192.168.1.65:8080";
 
 // Screen Layout
 export const SCREEN_WIDTH = 1000;
